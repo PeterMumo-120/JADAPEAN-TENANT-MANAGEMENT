@@ -1,0 +1,155 @@
+/*
+ * Layout + component styles for the Nyumba shell and dashboard.
+ * Loaded AFTER globals.css. One brand colour (green) via the tokens in globals.css.
+ */
+
+/* ---------- Shell ---------- */
+.app-shell { min-height: 100vh; background: var(--background); }
+
+.sidebar { display: none; }
+.main-area { margin-left: 0; display: flex; flex-direction: column; min-height: 100vh; }
+.topbar { padding: 0 16px; }
+
+.topbar {
+  position: sticky; top: 0; z-index: 10;
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  height: 64px;
+  background: rgb(255 255 255 / 0.88);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid var(--border);
+}
+
+.page-wrap {
+  flex: 1; display: flex; flex-direction: column;
+  width: 100%; max-width: 1240px; margin: 0 auto;
+  padding: 24px 16px 20px;
+}
+.page-heading {
+  display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 16px;
+}
+.page-footer {
+  margin-top: auto; padding-top: 40px;
+  display: flex; justify-content: space-between; gap: 12px;
+  font-size: 12px; color: var(--muted-foreground);
+}
+
+@media (min-width: 1024px) {
+  .sidebar {
+    display: flex; flex-direction: column; width: 244px;
+    position: fixed; inset: 0 auto 0 0; z-index: 20; overflow-y: auto;
+    background: var(--sidebar); color: var(--sidebar-foreground);
+  }
+  .main-area { margin-left: 244px; }
+  .topbar { padding: 0 30px; }
+  .page-wrap { padding: 32px 30px 24px; }
+}
+
+/* ---------- Navigation ---------- */
+.brand-mark {
+  display: grid; place-items: center; flex-shrink: 0;
+  width: 40px; height: 40px; border-radius: 12px;
+  background: var(--primary); color: #fff;
+  border: 1px solid rgb(255 255 255 / 0.18);
+}
+.nav-item {
+  display: flex; align-items: center; gap: 12px;
+  padding: 10px 12px; border-radius: 10px;
+  font-size: 14px; font-weight: 500; color: rgb(255 255 255 / 0.72);
+  transition: background-color 0.15s, color 0.15s;
+}
+.nav-item:hover { background: rgb(255 255 255 / 0.07); color: #fff; }
+.nav-item-active, .nav-item-active:hover { background: rgb(255 255 255 / 0.13); color: #fff; }
+.nav-item:focus-visible { outline: 2px solid var(--sidebar-ring); outline-offset: 2px; }
+
+/* ---------- Cards ---------- */
+.metric-card, .panel-card {
+  --card-spacing: 0px;
+  gap: 0; padding: 0;
+  border: 1px solid var(--border); border-radius: 14px;
+  background: var(--card); box-shadow: none;
+}
+.panel-card { padding-bottom: 4px; }
+
+.eyebrow { font-size: 13px; font-weight: 500; color: var(--muted-foreground); }
+.metric-icon {
+  display: grid; place-items: center; width: 32px; height: 32px; border-radius: 9px;
+  background: var(--accent); color: var(--primary);
+}
+.trend-pill {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 3px 8px; border-radius: 6px; font-size: 12px; font-weight: 500;
+}
+.trend-up { background: var(--accent); color: var(--primary); }
+.trend-flat { background: var(--muted); color: var(--muted-foreground); }
+.trend-warn { background: color-mix(in srgb, var(--destructive) 10%, white); color: var(--destructive); }
+
+/* ---------- Grids ---------- */
+.metric-grid, .content-grid, .bottom-grid { display: grid; gap: 16px; grid-template-columns: minmax(0, 1fr); }
+.property-card-grid { display: grid; gap: 20px; grid-template-columns: repeat(auto-fill, minmax(270px, 1fr)); }
+@media (min-width: 640px)  { .metric-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (min-width: 1024px) {
+  .content-grid { grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr); gap: 20px; }
+  .bottom-grid  { grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 20px; }
+}
+@media (min-width: 1280px) { .metric-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+
+/* ---------- Bar chart (axis 0 to 10M) ---------- */
+.chart-area { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 12px; height: 260px; padding: 20px 0 26px; }
+.chart-y-axis { display: flex; flex-direction: column; justify-content: space-between; font-size: 12px; color: var(--muted-foreground); text-align: right; }
+.chart-y-axis span { height: 0; display: flex; align-items: center; justify-content: flex-end; line-height: 1; }
+.chart-plot { position: relative; }
+.chart-gridlines { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: space-between; }
+.chart-gridlines i { display: block; height: 0; border-top: 1px dashed var(--border); }
+.bars { position: absolute; inset: 0; display: flex; gap: 12px; }
+.bar-column { position: relative; flex: 1; height: 100%; display: flex; align-items: flex-end; justify-content: center; }
+.bar-column span { position: absolute; bottom: -24px; font-size: 12px; color: var(--muted-foreground); }
+.bar { width: min(48px, 72%); border-radius: 6px 6px 0 0; background: var(--chart-1); transition: background-color 0.15s; }
+.bar:hover { background: var(--chart-3); }
+.bar-current, .bar-current:hover { background: var(--primary); }
+
+/* ---------- Lists ---------- */
+.property-row { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--border); }
+.property-row:last-child { border-bottom: 0; }
+.property-row:hover .truncate { text-decoration: underline; text-underline-offset: 3px; }
+.property-symbol { display: grid; place-items: center; flex-shrink: 0; width: 38px; height: 38px; border-radius: 10px; background: var(--accent); color: var(--primary); }
+.progress-track { height: 6px; border-radius: 999px; background: var(--muted); overflow: hidden; }
+.progress-fill { height: 100%; border-radius: 999px; background: var(--primary); }
+
+.payment-row { display: flex; align-items: center; gap: 12px; padding: 12px 20px; border-top: 1px solid var(--border); }
+.payment-row:first-child { border-top: 0; }
+.payment-check { display: grid; place-items: center; flex-shrink: 0; width: 28px; height: 28px; border-radius: 999px; background: var(--accent); color: var(--primary); }
+
+.attention-row { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 10px; background: var(--muted); transition: background-color 0.15s; }
+.attention-row:hover { background: var(--accent); }
+
+.avatar-initials { display: inline-grid; place-items: center; flex-shrink: 0; border-radius: 999px; font-size: 12px; font-weight: 600; }
+
+/* ---------- Building cards (flat tonal greens) ---------- */
+.building-cover { display: flex; align-items: flex-start; justify-content: space-between; height: 112px; padding: 14px; color: #fff; }
+.building-cover-1 { background: #1f4d3f; }
+.building-cover-2 { background: #2b624f; }
+.building-cover-3 { background: #356f59; }
+.building-cover-4 { background: #173a2f; }
+.building-cover-icon { display: grid; place-items: center; width: 38px; height: 38px; border-radius: 10px; background: rgb(255 255 255 / 0.15); }
+
+/* ---------- Status badges ---------- */
+.status-badge { border-color: transparent; font-weight: 500; }
+.status-paid { background: var(--accent); color: var(--primary); }
+.status-pending { background: var(--muted); color: var(--muted-foreground); }
+.status-overdue { background: color-mix(in srgb, var(--destructive) 10%, white); color: var(--destructive); }
+
+/* ---------- "Add a building" tile ---------- */
+.add-property-card {
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px;
+  min-height: 100%; padding: 24px; text-align: center;
+  border: 1px dashed color-mix(in srgb, var(--primary) 35%, transparent); border-radius: 14px;
+  color: var(--primary); transition: background-color 0.15s;
+}
+.add-property-card:hover { background: var(--accent); }
+
+/* ---------- Phones: header actions become full-width, thumb-sized buttons ---------- */
+@media (max-width: 639px) {
+  .page-heading > :last-child:not(:first-child) { width: 100%; }
+  .page-heading > :last-child > a,
+  .page-heading > :last-child > button { flex: 1 1 0; min-height: 44px; justify-content: center; }
+}
