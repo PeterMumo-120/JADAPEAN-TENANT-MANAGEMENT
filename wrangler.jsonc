@@ -33,8 +33,8 @@
 	"d1_databases": [
 		{
 			"binding": "DB",
-			"database_name": "jadapean-tenant-management",
-			"database_id": "af72d052-b5a7-46e3-95d4-19a2bff382a4",
+			"database_name": "tenants",
+			"database_id": "3cfb0f04-c4df-4b6f-8d30-dc273e6c2c41",
 			"migrations_dir": "drizzle"
 		}
 	],
@@ -44,6 +44,6 @@
 		"MPESA_ENV": "sandbox",
 		"MPESA_SHORTCODE": "174379",
 		"SESSION_TTL_HOURS": "12",
-		"NEXT_PUBLIC_TURNSTILE_SITE_KEY": "0x4AAAAAAErF3hsR_a_pcPdh"
+		"NEXT_PUBLIC_TURNSTILE_SITE_KEY": "0x4AAAAAAGHnAt5jvSai_yu3"
 	}
 }
