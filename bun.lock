@@ -2,7 +2,7 @@
   "lockfileVersion": 1,
   "workspaces": {
     "": {
-      "name": "tenants-v2",
+      "name": "jadapean-tenant-management",
       "dependencies": {
         "@base-ui/react": "^1.9.0",
         "@hookform/resolvers": "^7.0.6",

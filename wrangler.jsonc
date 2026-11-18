@@ -1,7 +1,7 @@
 {
 	"$schema": "node_modules/wrangler/config-schema.json",
 	"main": ".open-next/worker.js",
-	"name": "tenants-v2",
+	"name": "jadapean-tenant-management",
 	"compatibility_date": "2026-11-16",
 	"compatibility_flags": [
 		"nodejs_compat",
@@ -16,7 +16,7 @@
 			// Self-reference service binding, the service name must match the worker name
 			// see https://opennext.js.org/cloudflare/caching
 			"binding": "WORKER_SELF_REFERENCE",
-			"service": "tenants-v2"
+			"service": "jadapean-tenant-management"
 		}
 	],
 	"images": {
@@ -33,14 +33,14 @@
 	"d1_databases": [
 		{
 			"binding": "DB",
-			"database_name": "tenants-v2",
+			"database_name": "jadapean-tenant-management",
 			"database_id": "af72d052-b5a7-46e3-95d4-19a2bff382a4",
 			"migrations_dir": "drizzle"
 		}
 	],
 	"keep_vars": true,
 	"vars": {
-		"APP_URL": "https://tenants-v2.linktowork.workers.dev",
+		"APP_URL": "https://jadapean-tenant-management.linktowork.workers.dev",
 		"MPESA_ENV": "sandbox",
 		"MPESA_SHORTCODE": "174379",
 		"SESSION_TTL_HOURS": "12",
