@@ -3,6 +3,7 @@ import { PageHeader } from "@/components/layout/page-header";
 import { RefreshButton } from "@/components/layout/refresh-button";
 import { PrimaryLink } from "@/components/layout/primary-link";
 import { Overview } from "@/components/dashboard/overview";
+import { AutoSync } from "@/components/dashboard/auto-sync";
 
 function greeting() {
   const hour = Number(new Intl.DateTimeFormat("en-GB", { hour: "numeric", hour12: false, timeZone: "Africa/Nairobi" }).format(new Date())) % 24;
@@ -18,6 +19,7 @@ export default async function DashboardPage() {
         description="Here’s how your buildings are doing this month."
         actions={<><RefreshButton /><PrimaryLink href="/tenants/new">Add tenant</PrimaryLink></>}
       />
+      <AutoSync />
       <Overview />
     </>
   );

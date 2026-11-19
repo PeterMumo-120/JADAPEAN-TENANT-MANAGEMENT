@@ -1,15 +1,15 @@
-import { Check } from "lucide-react";
+import { Check, Clock3 } from "lucide-react";
 import { money } from "@/lib/format";
-import type { payments } from "@/lib/mock-data";
-
-type PaymentItem = (typeof payments)[number];
+import type { PaymentItem } from "@/lib/payments/queries";
 
 export function PaymentRows({ items }: { items: PaymentItem[] }) {
   return (
     <div className="flex flex-col">
       {items.map((payment) => (
         <div className="payment-row" key={payment.id}>
-          <div className="payment-check"><Check className="size-3.5" /></div>
+          <div className="payment-check" style={payment.matched ? undefined : { background: "color-mix(in srgb, var(--destructive) 10%, white)", color: "var(--destructive)" }}>
+            {payment.matched ? <Check className="size-3.5" /> : <Clock3 className="size-3.5" />}
+          </div>
           <div className="min-w-0 flex-1">
             <div className="truncate text-xs font-medium">{payment.name}</div>
             <div className="mt-1 truncate text-xs text-muted-foreground">

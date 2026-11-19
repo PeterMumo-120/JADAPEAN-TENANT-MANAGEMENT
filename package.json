@@ -14,7 +14,9 @@
     "db:studio": "drizzle-kit studio --config=drizzle.config.ts",
     "db:backup": "wrangler d1 export DB --remote --output=backup.sql",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "mpesa:register-c2b": "bun scripts/register-c2b.ts",
+    "mpesa:register-pull": "bun scripts/register-pull.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.9.0",

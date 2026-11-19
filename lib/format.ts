@@ -27,3 +27,15 @@ export function suggestAccountRef(buildingName: string, houseNo?: string): strin
   const prefix = (words.length > 1 ? words.map((w) => w[0]).join("") : (words[0] ?? "").slice(0, 3)).toUpperCase().replace(/[^A-Z0-9]/g, "");
   return `${prefix}-${house}`.slice(0, 20);
 }
+
+const EAT = "Africa/Nairobi";
+/** "Today, 2:14 PM", "Yesterday, 9:02 AM" or "12 Nov, 4:30 PM" in Nairobi time. */
+export function formatWhen(d: Date, now = new Date()): string {
+  const time = new Intl.DateTimeFormat("en-GB", { timeZone: EAT, hour: "numeric", minute: "2-digit", hour12: true }).format(d).toUpperCase();
+  if (todayEA(d) === todayEA(now)) return `Today, ${time}`;
+  if (todayEA(d) === todayEA(new Date(now.getTime() - 864e5))) return `Yesterday, ${time}`;
+  return `${new Intl.DateTimeFormat("en-GB", { timeZone: EAT, day: "numeric", month: "short" }).format(d)}, ${time}`;
+}
+
+/** 8600000 -> "8.6M", 250000 -> "250K". */
+export const compactNumber = (n: number) => (n >= 1e6 ? `${+(n / 1e6).toFixed(1)}M` : n >= 1e3 ? `${Math.round(n / 1e3)}K` : String(n));
