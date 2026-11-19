@@ -29,10 +29,10 @@ export default async function ProtectedLayout({ children }: { children: React.Re
         <Topbar admin={admin} counts={counts} paybill={paybill} phoneLabel={phoneLabel} monthLabel={monthLabel} />
         <div className="page-wrap">
           {children}
-          <footer className="page-footer">
+          {/* <footer className="page-footer">
             <span>© 2026 Nyumba Property Management</span>
             <span className="hidden sm:inline">Made for better living in Kenya</span>
-          </footer>
+          </footer> */}
         </div>
       </main>
     </div>

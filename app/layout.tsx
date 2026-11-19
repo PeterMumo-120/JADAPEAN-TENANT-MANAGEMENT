@@ -9,7 +9,7 @@ const mono = Geist_Mono({ subsets: ["latin"], variable: "--font-geist-mono", dis
 const display = Fraunces({ subsets: ["latin"], variable: "--font-fraunces", axes: ["opsz"], display: "swap" });
 
 export const metadata: Metadata = {
-  title: "Nyumba: rent and tenant management",
+  title: "Rent and tenant management",
   description: "Managing buildings, tenants and M-Pesa rent payments.",
   robots: { index: false, follow: false }, // private admin app
 };

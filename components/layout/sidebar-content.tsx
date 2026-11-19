@@ -31,7 +31,7 @@ export function SidebarContent({ admin, counts, paybill, phoneLabel, onNavigate 
       <div className="flex h-[82px] items-center gap-3 px-7">
         <div className="brand-mark"><Home className="size-5" strokeWidth={2.2} /></div>
         <div>
-          <div className="font-display text-[21px] font-semibold tracking-tight">nyumba<span className="text-[#8fc09b]">.</span></div>
+          <div className="font-display text-[21px] font-semibold tracking-tight">rentify<span className="text-[#8fc09b]">.</span></div>
           <div className="text-xs font-medium tracking-wide text-white/60">Property management</div>
         </div>
       </div>
@@ -46,7 +46,7 @@ export function SidebarContent({ admin, counts, paybill, phoneLabel, onNavigate 
       </div>
 
       <div className="mt-auto p-4">
-        {paybill && (
+        {/* {paybill && (
           <div className="rounded-xl border border-white/10 bg-white/[.055] p-3.5">
             <div className="flex items-center gap-2 text-xs font-medium text-white/75"><span className="size-2 rounded-full bg-[#88b391]" /> M-Pesa Paybill active</div>
             <p className="mt-2 text-xs leading-relaxed text-white/60">All tenant payments are reconciled to one paybill.</p>
@@ -54,7 +54,7 @@ export function SidebarContent({ admin, counts, paybill, phoneLabel, onNavigate 
               <span>Paybill number</span><span className="font-mono font-medium tracking-wide text-white/80">{paybill}</span>
             </div>
           </div>
-        )}
+        )} */}
         <div className="mt-4 flex items-center gap-3 rounded-lg px-2 py-2">
           <div className="avatar-initials size-9 bg-white/15 text-white">{initials(admin.firstName, admin.lastName)}</div>
           <div className="min-w-0 flex-1">
