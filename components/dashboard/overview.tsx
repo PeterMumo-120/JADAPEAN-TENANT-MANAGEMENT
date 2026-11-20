@@ -119,7 +119,7 @@ export async function Overview() {
             <Link href="/payments" className="inline-flex items-center text-xs font-medium text-primary hover:underline">All payments <ArrowRight className="ml-1 size-3.5" /></Link>
           </CardHeader>
           <CardContent className="px-0 pb-1">
-            {d.recent.length ? <PaymentRows items={d.recent} /> : <EmptyState icon={Wallet} title="No payments yet" description="Payments to your paybill appear here as they come in." />}
+            {d.recent.length ? <PaymentRows items={d.recent} /> : <EmptyState icon={Wallet} title="No payments yet" description="Payments to your paybills and tills appear here as they come in." />}
           </CardContent>
         </Card>
 

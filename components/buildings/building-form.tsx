@@ -1,31 +1,49 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
-import { Loader2 } from "lucide-react";
+import { Landmark, Loader2, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
+import { EmptyState } from "@/components/ui/empty-state";
 import { FormField } from "@/components/ui/form-field";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { PrimaryLink } from "@/components/layout/primary-link";
 import { buildingSchema, type BuildingInput, type BuildingValues } from "@/lib/validators/buildings";
-import { createBuilding, deleteBuilding, updateBuilding } from "@/lib/buildings/actions";
+import { createBuilding, updateBuilding } from "@/lib/buildings/actions";
 
-export type BuildingFormData = { id: string; name: string; totalUnits: number; address: string | null };
+export type BuildingFormData = { id: string; name: string; totalUnits: number; address: string | null; shortcodeId: string | null };
+export type ShortcodeOption = { id: string; label: string; type: "paybill" | "till"; number: string };
 
-export function BuildingForm({ building }: { building?: BuildingFormData }) {
+const selectClass = "h-9 w-full rounded-lg border border-input bg-card px-3 text-sm outline-none transition-colors focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/30 aria-invalid:border-destructive disabled:opacity-50";
+const typeName = (t: "paybill" | "till") => (t === "till" ? "Till" : "Paybill");
+
+export function BuildingForm({ building, shortcodes }: { building?: BuildingFormData; shortcodes: ShortcodeOption[] }) {
   const router = useRouter();
   const [pending, start] = useTransition();
-  const [confirmDelete, setConfirmDelete] = useState(false);
   const form = useForm<BuildingInput, unknown, BuildingValues>({
     resolver: zodResolver(buildingSchema),
-    defaultValues: { name: building?.name ?? "", totalUnits: building?.totalUnits ?? 10, address: building?.address ?? "" },
+    defaultValues: { name: building?.name ?? "", totalUnits: building?.totalUnits ?? "", address: building?.address ?? "", shortcodeId: building?.shortcodeId ?? "" },
   });
   const e = form.formState.errors;
+  const chosen = shortcodes.find((s) => s.id === form.watch("shortcodeId"));
+  const locked = !!building?.shortcodeId; // permanent once set
+  const lockedShortcode = locked ? shortcodes.find((s) => s.id === building!.shortcodeId) : undefined;
+  const back = building ? `/buildings/${building.id}` : "/buildings";
+
+  if (!building && shortcodes.length === 0) {
+    return (
+      <Card className="panel-card">
+        <EmptyState icon={Landmark} title="Add a paybill or till first"
+          description="Every building collects rent on one paybill or till. Add yours, then come back to create the building."
+          action={<PrimaryLink href="/shortcodes/new">Add paybill or till</PrimaryLink>} />
+      </Card>
+    );
+  }
 
   function submit(values: BuildingValues) {
     start(async () => {
@@ -37,23 +55,7 @@ export function BuildingForm({ building }: { building?: BuildingFormData }) {
           return;
         }
         toast.success(r.message);
-        router.push("/buildings");
-        router.refresh();
-      } catch {
-        toast.error("Something went wrong. Please try again.");
-      }
-    });
-  }
-
-  function remove() {
-    if (!building) return;
-    setConfirmDelete(false);
-    start(async () => {
-      try {
-        const r = await deleteBuilding(building.id);
-        if (!r.ok) { toast.error(r.message); return; }
-        toast.success(r.message);
-        router.push("/buildings");
+        router.push(building ? `/buildings/${building.id}` : "/buildings");
         router.refresh();
       } catch {
         toast.error("Something went wrong. Please try again.");
@@ -63,43 +65,45 @@ export function BuildingForm({ building }: { building?: BuildingFormData }) {
 
   return (
     <Card className="panel-card">
-      <form className="flex flex-col gap-5 p-5 sm:p-6" onSubmit={form.handleSubmit(submit)} noValidate>
+      <form className="flex flex-col gap-5 p-5 sm:p-6" onSubmit={form.handleSubmit(submit)} noValidate autoComplete="off">
         <FormField label="Building name" htmlFor="name" error={e.name?.message}>
-          <Input id="name" placeholder="e.g. Kijani Court" autoComplete="off" {...form.register("name")} aria-invalid={!!e.name} />
+          <Input id="name" placeholder="e.g. Kijani Court" {...form.register("name")} aria-invalid={!!e.name} />
         </FormField>
         <div className="grid gap-5 sm:grid-cols-2">
           <FormField label="Number of houses" htmlFor="totalUnits" error={e.totalUnits?.message} hint="Total houses available to rent.">
-            <Input id="totalUnits" type="number" min="1" inputMode="numeric" {...form.register("totalUnits")} aria-invalid={!!e.totalUnits} />
+            <Input id="totalUnits" type="number" min="1" inputMode="numeric" placeholder="e.g. 24" {...form.register("totalUnits")} aria-invalid={!!e.totalUnits} />
           </FormField>
           <FormField label="Area (optional)" htmlFor="address" error={e.address?.message} hint="e.g. Kilimani, Nairobi">
             <Input id="address" placeholder="Kilimani, Nairobi" {...form.register("address")} aria-invalid={!!e.address} />
           </FormField>
         </div>
-        <div className="mt-1 flex flex-wrap items-center justify-between gap-3">
-          {building ? (
-            <Button type="button" variant="ghost" disabled={pending} className="text-destructive hover:text-destructive" onClick={() => setConfirmDelete(true)}>Delete building</Button>
-          ) : <span />}
-          <div className="flex gap-2">
-            <Button variant="outline" render={<Link href="/buildings" />}>Cancel</Button>
-            <Button type="submit" disabled={pending} className="bg-primary text-white hover:bg-primary/90">
-              {pending && <Loader2 className="mr-1.5 size-4 animate-spin" />}{building ? "Save changes" : "Add building"}
-            </Button>
+
+        {locked ? (
+          <div>
+            <p className="text-xs font-medium">Paybill or till</p>
+            <div className="mt-1.5 flex items-center gap-2 rounded-lg border border-border bg-muted/50 px-3 py-2 text-sm">
+              <Lock className="size-3.5 text-muted-foreground" />
+              {lockedShortcode ? <span>{lockedShortcode.label} <span className="font-mono text-xs text-muted-foreground">· {typeName(lockedShortcode.type)} {lockedShortcode.number}</span></span> : <span className="text-muted-foreground">Attached</span>}
+            </div>
+            <p className="mt-1.5 text-xs text-muted-foreground">This can’t be changed. To collect on a different paybill or till, add a new building and archive this one.</p>
           </div>
+        ) : (
+          <FormField label="Paybill or till" htmlFor="shortcodeId" error={e.shortcodeId?.message}
+            hint={chosen ? (chosen.type === "paybill" ? "Tenants will need an account number. Payments match to them automatically." : "No account numbers. You mark tenants as paid yourself.") : building ? "This building has none yet. Once you pick one it is permanent." : "Permanent once the building is created."}>
+            <select id="shortcodeId" className={selectClass} aria-invalid={!!e.shortcodeId} {...form.register("shortcodeId")}>
+              <option value="">Select a paybill or till</option>
+              {shortcodes.map((s) => <option key={s.id} value={s.id}>{s.label} — {typeName(s.type)} {s.number}</option>)}
+            </select>
+          </FormField>
+        )}
+
+        <div className="mt-1 flex justify-end gap-2">
+          <Button variant="outline" render={<Link href={back} />}>Cancel</Button>
+          <Button type="submit" disabled={pending} className="bg-primary text-white hover:bg-primary/90">
+            {pending && <Loader2 className="mr-1.5 size-4 animate-spin" />}{building ? "Save changes" : "Add building"}
+          </Button>
         </div>
       </form>
-
-      <AlertDialog open={confirmDelete} onOpenChange={setConfirmDelete}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete {building?.name}?</AlertDialogTitle>
-            <AlertDialogDescription>This can’t be undone. Buildings that have tenants on record can’t be deleted.</AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Keep building</AlertDialogCancel>
-            <AlertDialogAction onClick={remove} className="bg-destructive text-white hover:bg-destructive/90">Delete building</AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </Card>
   );
 }

@@ -16,17 +16,16 @@ export default async function ProtectedLayout({ children }: { children: React.Re
 
   const admin = { firstName: me.firstName, lastName: me.lastName, phone: me.phone };
   const counts = { pendingAdmins: pending?.n ?? 0, unmatchedPayments: unmatched?.n ?? 0 };
-  const paybill = process.env.MPESA_SHORTCODE ?? "";
   const phoneLabel = formatPhone(me.phone);
   const monthLabel = new Intl.DateTimeFormat("en-GB", { month: "long", year: "numeric", timeZone: "Africa/Nairobi" }).format(new Date());
 
   return (
     <div className="app-shell min-h-screen">
       <aside className="sidebar">
-        <SidebarContent admin={admin} counts={counts} paybill={paybill} phoneLabel={phoneLabel} />
+        <SidebarContent admin={admin} counts={counts} phoneLabel={phoneLabel} />
       </aside>
       <main className="main-area min-w-0">
-        <Topbar admin={admin} counts={counts} paybill={paybill} phoneLabel={phoneLabel} monthLabel={monthLabel} />
+        <Topbar admin={admin} counts={counts} phoneLabel={phoneLabel} monthLabel={monthLabel} />
         <div className="page-wrap">
           {children}
           {/* <footer className="page-footer">

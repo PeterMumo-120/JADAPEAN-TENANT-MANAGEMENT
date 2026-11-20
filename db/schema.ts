@@ -48,13 +48,40 @@ export const loginAttempts = sqliteTable("login_attempts", {
 
 /* ───────────── Property ───────────── */
 
+/**
+ * A paybill or till the business receives rent on. Each one has its own Daraja app, so the
+ * credentials live here (the secret is AES-GCM encrypted, see lib/mpesa/crypto.ts).
+ */
+export const shortcodes = sqliteTable("shortcodes", {
+  id: id(),
+  label: text("label").notNull(), // "Kijani Court paybill"
+  type: text("type", { enum: ["paybill", "till"] }).notNull(),
+  number: text("number").notNull().unique(), // the paybill / till number tenants pay to
+  env: text("env", { enum: ["sandbox", "production"] }).notNull().default("production"),
+  consumerKey: text("consumer_key"),
+  consumerSecretEnc: text("consumer_secret_enc"), // never returned to the browser
+  nominatedNumber: text("nominated_number"), // Safaricom MSISDN used for Pull registration
+  active: integer("active", { mode: "boolean" }).notNull().default(true),
+  urlsRegisteredAt: integer("urls_registered_at", { mode: "timestamp" }),
+  pullRegisteredAt: integer("pull_registered_at", { mode: "timestamp" }),
+  lastSyncAt: integer("last_sync_at", { mode: "timestamp" }),
+  lastSyncError: text("last_sync_error"),
+  createdAt: createdAt(),
+});
+
+export type ShortcodeRow = typeof shortcodes.$inferSelect;
+
 export const buildings = sqliteTable("buildings", {
   id: id(),
   name: text("name").notNull().unique(),
   totalUnits: integer("total_units").notNull(),
   address: text("address"),
+  // Required by the app for every new building and locked once set. Nullable in the database only
+  // so buildings created before shortcodes existed keep working until you attach one.
+  shortcodeId: text("shortcode_id").references(() => shortcodes.id),
+  archivedAt: integer("archived_at", { mode: "timestamp" }),
   createdAt: createdAt(),
-});
+}, (t) => [index("buildings_shortcode_idx").on(t.shortcodeId)]);
 
 export const tenants = sqliteTable("tenants", {
   id: id(),
@@ -64,7 +91,7 @@ export const tenants = sqliteTable("tenants", {
   buildingId: text("building_id").notNull().references(() => buildings.id),
   houseNo: text("house_no"), // optional
   rentAmount: integer("rent_amount").notNull(), // whole KES
-  accountRef: text("account_ref").notNull().unique(), // paybill account number tenants type
+  accountRef: text("account_ref"), // paybill account number tenants type. NULL for till buildings. Unique per shortcode (checked in the app)
   moveInDate: text("move_in_date").notNull(), // YYYY-MM-DD
   status: text("status", { enum: ["active", "moved_out"] }).notNull().default("active"),
   paidThrough: text("paid_through"), // "YYYY-MM", denormalised for fast dashboards
@@ -86,7 +113,9 @@ export const payments = sqliteTable("payments", {
   id: id(),
   mpesaReceipt: text("mpesa_receipt").notNull().unique(), // idempotency key
   amount: integer("amount").notNull(),
-  billRef: text("bill_ref"), // account number typed by the payer
+  billRef: text("bill_ref"), // account number typed by the payer (paybill only)
+  shortcodeId: text("shortcode_id").references(() => shortcodes.id), // which paybill/till received it
+  shortcodeNumber: text("shortcode_number"), // the raw number from the payload, so payments can be linked later
   msisdnHash: text("msisdn_hash"), // C2B v2 sends it hashed
   payerName: text("payer_name"),
   paidAt: integer("paid_at", { mode: "timestamp" }).notNull(),
@@ -99,6 +128,7 @@ export const payments = sqliteTable("payments", {
   index("payments_tenant_idx").on(t.tenantId),
   index("payments_paid_at_idx").on(t.paidAt),
   index("payments_status_idx").on(t.status),
+  index("payments_shortcode_idx").on(t.shortcodeId),
 ]);
 
 // One payment can cover several months; one month can be covered by several payments.

@@ -13,7 +13,7 @@ export function PaymentRows({ items }: { items: PaymentItem[] }) {
           <div className="min-w-0 flex-1">
             <div className="truncate text-xs font-medium">{payment.name}</div>
             <div className="mt-1 truncate text-xs text-muted-foreground">
-              {payment.unit} · {payment.building} <span className="mx-1 text-border">·</span><span className="font-mono">{payment.receipt}</span>
+              {payment.unit} · {payment.building}{payment.via ? ` · ${payment.via}` : ""} <span className="mx-1 text-border">·</span><span className="font-mono">{payment.receipt}</span>
             </div>
           </div>
           <div className="text-right">

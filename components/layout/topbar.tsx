@@ -1,10 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Bell, CircleHelp, Menu } from "lucide-react";
-import { toast } from "sonner";
+import { Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { initials } from "@/lib/format";
@@ -12,8 +10,8 @@ import { sectionLabel } from "@/components/layout/nav-config";
 import { SidebarContent, type ShellAdmin, type ShellCounts } from "@/components/layout/sidebar-content";
 import { UserMenu } from "@/components/layout/user-menu";
 
-export function Topbar({ admin, counts, paybill, phoneLabel, monthLabel }: {
-  admin: ShellAdmin; counts: ShellCounts; paybill: string; phoneLabel: string; monthLabel: string;
+export function Topbar({ admin, counts, phoneLabel, monthLabel }: {
+  admin: ShellAdmin; counts: ShellCounts; phoneLabel: string; monthLabel: string;
 }) {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
@@ -25,9 +23,9 @@ export function Topbar({ admin, counts, paybill, phoneLabel, monthLabel }: {
       <div className="flex min-w-0 items-center gap-3">
         <Sheet open={open} onOpenChange={setOpen}>
           <SheetTrigger render={<Button variant="outline" size="icon" className="lg:hidden" aria-label="Open navigation"><Menu /></Button>} />
-          <SheetContent side="left" className="w-[280px] border-0 bg-[#183c32] p-0 text-white">
+          <SheetContent side="left" className="h-dvh w-[280px] border-0 bg-[#183c32] p-0 text-white">
             <SheetHeader className="sr-only"><SheetTitle>Navigation</SheetTitle></SheetHeader>
-            <SidebarContent admin={admin} counts={counts} paybill={paybill} phoneLabel={phoneLabel} onNavigate={() => setOpen(false)} />
+            <SidebarContent admin={admin} counts={counts} phoneLabel={phoneLabel} onNavigate={() => setOpen(false)} />
           </SheetContent>
         </Sheet>
         {/* <div className="hidden text-xs text-muted-foreground sm:block">Workspace <span className="mx-2 text-border">/</span></div> */}

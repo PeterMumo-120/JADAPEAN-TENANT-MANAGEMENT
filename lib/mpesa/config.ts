@@ -1,30 +1,21 @@
-/** Safaricom's callback IPs. Only enforced when MPESA_ENV=production (sandbox/Postman calls come from elsewhere). */
+import type { ShortcodeRow } from "@/db/schema";
+
+/** Safaricom's callback IPs. Enforced for production shortcodes (sandbox/Postman calls come from elsewhere). */
 export const SAFARICOM_IPS = [
   "196.201.214.200", "196.201.214.206", "196.201.213.114", "196.201.214.207",
   "196.201.214.208", "196.201.213.44", "196.201.212.127", "196.201.212.138",
   "196.201.212.129", "196.201.212.136", "196.201.212.74", "196.201.212.69",
 ];
 
+/** App-wide settings only. Everything per paybill/till (number, env, Daraja keys) lives in the `shortcodes` table. */
 export function mpesaConfig() {
-  const env = process.env.MPESA_ENV === "production" ? "production" : "sandbox";
   return {
-    env,
-    baseUrl: env === "production" ? "https://api.safaricom.co.ke" : "https://sandbox.safaricom.co.ke",
-    shortcode: process.env.MPESA_SHORTCODE ?? "",
-    consumerKey: process.env.MPESA_CONSUMER_KEY ?? "",
-    consumerSecret: process.env.MPESA_CONSUMER_SECRET ?? "",
-    nominatedNumber: process.env.MPESA_NOMINATED_NUMBER ?? "",
     appUrl: (process.env.APP_URL ?? "").replace(/\/$/, ""),
     callbackSecret: process.env.MPESA_CALLBACK_SECRET ?? "",
   };
 }
 
-export function isConfigured() {
-  const c = mpesaConfig();
-  return !!(c.shortcode && c.consumerKey && c.consumerSecret);
-}
-
-/** Webhook URLs to register with Safaricom. The secret is part of the path and must not contain words like "mpesa" or "query". */
+/** One URL pair serves every shortcode: each payload says which shortcode it belongs to. */
 export function callbackUrls() {
   const c = mpesaConfig();
   if (!c.appUrl || !c.callbackSecret) throw new Error("Set APP_URL and MPESA_CALLBACK_SECRET first.");
@@ -32,14 +23,32 @@ export function callbackUrls() {
   return { confirmation: `${base}/confirmation`, validation: `${base}/validation` };
 }
 
+const BLOCKED_WORDS = /mpesa|m-pesa|safaricom|exec|cmd|sql|query/i;
+
+/** Safaricom rejects production URLs that are not https or that contain certain words. Returns an error message or null. */
+export function urlProblem(url: string, env: ShortcodeRow["env"]): string | null {
+  if (env === "production" && !url.startsWith("https://")) return "Production callback URLs must be https. Set APP_URL to your public https address.";
+  if (env === "production" && BLOCKED_WORDS.test(url)) return "Safaricom blocks URLs containing words like mpesa, safaricom, exec, cmd, sql or query. Change APP_URL or MPESA_CALLBACK_SECRET.";
+  return null;
+}
+
 export function callerIp(req: Request) {
   return req.headers.get("cf-connecting-ip") ?? req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "";
 }
 
-/** The secret in the URL must match; in production the caller must also be a Safaricom IP. */
-export function webhookAllowed(req: Request, secret: string): { ok: boolean; reason?: string } {
+export const isSafaricomIp = (req: Request) => SAFARICOM_IPS.includes(callerIp(req));
+
+/** Step 1 of the webhook gate: the secret in the URL path must match. The IP check happens once the shortcode is known. */
+export function secretOk(secret: string): boolean {
   const c = mpesaConfig();
-  if (!c.callbackSecret || secret !== c.callbackSecret) return { ok: false, reason: "bad secret" };
-  if (c.env === "production" && !SAFARICOM_IPS.includes(callerIp(req))) return { ok: false, reason: `ip ${callerIp(req)} not allowed` };
-  return { ok: true };
+  return !!c.callbackSecret && secret === c.callbackSecret;
+}
+
+/**
+ * Step 2: production (and unknown) shortcodes must come from a Safaricom IP. Sandbox shortcodes skip the IP check
+ * so you can test with curl or Postman.
+ */
+export function ipAllowed(req: Request, shortcode: ShortcodeRow | null): boolean {
+  if (shortcode?.env === "sandbox") return true;
+  return isSafaricomIp(req);
 }

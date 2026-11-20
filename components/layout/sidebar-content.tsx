@@ -10,8 +10,8 @@ import { UserMenu } from "@/components/layout/user-menu";
 export type ShellAdmin = { firstName: string; lastName: string; phone: string };
 export type ShellCounts = { pendingAdmins: number; unmatchedPayments: number };
 
-export function SidebarContent({ admin, counts, paybill, phoneLabel, onNavigate }: {
-  admin: ShellAdmin; counts: ShellCounts; paybill: string; phoneLabel: string; onNavigate?: () => void;
+export function SidebarContent({ admin, counts, phoneLabel, onNavigate }: {
+  admin: ShellAdmin; counts: ShellCounts; phoneLabel: string; onNavigate?: () => void;
 }) {
   const pathname = usePathname();
   const link = (item: NavItem) => {
@@ -26,9 +26,10 @@ export function SidebarContent({ admin, counts, paybill, phoneLabel, onNavigate 
     );
   };
 
+  // Brand and user stay pinned; the navigation in the middle scrolls vertically whenever it is taller than the screen.
   return (
-    <div className="flex h-full flex-col">
-      <div className="flex h-[82px] items-center gap-3 px-7">
+    <div className="flex h-full min-h-0 flex-col">
+      <div className="flex h-[82px] shrink-0 items-center gap-3 px-7">
         <div className="brand-mark"><Home className="size-5" strokeWidth={2.2} /></div>
         <div>
           <div className="font-display text-[21px] font-semibold tracking-tight">rentify<span className="text-[#8fc09b]">.</span></div>
@@ -36,26 +37,19 @@ export function SidebarContent({ admin, counts, paybill, phoneLabel, onNavigate 
         </div>
       </div>
 
-      <div className="px-4 pt-5">
-        <p className="px-3 pb-2 text-xs font-semibold tracking-wide text-white/55">Workspace</p>
-        <nav className="flex flex-col gap-1" aria-label="Main navigation">{workspaceNav.map(link)}</nav>
-      </div>
-      <div className="px-4 pt-8">
-        <p className="px-3 pb-2 text-xs font-semibold tracking-wide text-white/55">Manage</p>
-        <nav className="flex flex-col gap-1" aria-label="Manage">{manageNav.map(link)}</nav>
+      <div className="sidebar-scroll min-h-0 flex-1 overflow-y-auto overscroll-contain pb-4">
+        <div className="px-4 pt-5">
+          <p className="px-3 pb-2 text-xs font-semibold tracking-wide text-white/55">Workspace</p>
+          <nav className="flex flex-col gap-1" aria-label="Main navigation">{workspaceNav.map(link)}</nav>
+        </div>
+        <div className="px-4 pt-8">
+          <p className="px-3 pb-2 text-xs font-semibold tracking-wide text-white/55">Manage</p>
+          <nav className="flex flex-col gap-1" aria-label="Manage">{manageNav.map(link)}</nav>
+        </div>
       </div>
 
-      <div className="mt-auto p-4">
-        {/* {paybill && (
-          <div className="rounded-xl border border-white/10 bg-white/[.055] p-3.5">
-            <div className="flex items-center gap-2 text-xs font-medium text-white/75"><span className="size-2 rounded-full bg-[#88b391]" /> M-Pesa Paybill active</div>
-            <p className="mt-2 text-xs leading-relaxed text-white/60">All tenant payments are reconciled to one paybill.</p>
-            <div className="mt-3 flex items-center justify-between border-t border-white/10 pt-3 text-xs text-white/60">
-              <span>Paybill number</span><span className="font-mono font-medium tracking-wide text-white/80">{paybill}</span>
-            </div>
-          </div>
-        )} */}
-        <div className="mt-4 flex items-center gap-3 rounded-lg px-2 py-2">
+      <div className="shrink-0 border-t border-white/10 p-4">
+        <div className="flex items-center gap-3 rounded-lg px-2 py-1">
           <div className="avatar-initials size-9 bg-white/15 text-white">{initials(admin.firstName, admin.lastName)}</div>
           <div className="min-w-0 flex-1">
             <div className="truncate text-xs font-medium text-white/90">{admin.firstName} {admin.lastName}</div>

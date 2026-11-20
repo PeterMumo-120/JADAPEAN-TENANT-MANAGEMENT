@@ -1,4 +1,4 @@
-import { Building2, LayoutDashboard, Settings2, ShieldCheck, Users, Wallet, type LucideIcon } from "lucide-react";
+import { Building2, Landmark, LayoutDashboard, Settings2, ShieldCheck, Users, Wallet, type LucideIcon } from "lucide-react";
 
 export type NavItem = { label: string; href: string; icon: LucideIcon; badge?: "pendingAdmins" | "unmatchedPayments" };
 
@@ -10,6 +10,7 @@ export const workspaceNav: NavItem[] = [
 ];
 
 export const manageNav: NavItem[] = [
+  { label: "Paybills & Tills", href: "/shortcodes", icon: Landmark },
   { label: "Admins", href: "/admins", icon: ShieldCheck, badge: "pendingAdmins" },
   { label: "Settings", href: "/settings", icon: Settings2 },
 ];

@@ -1,5 +1,5 @@
-import { asc, and, eq, isNotNull } from "drizzle-orm";
-import { paymentAllocations, payments, tenants } from "@/db/schema";
+import { asc, and, eq, isNotNull, isNull } from "drizzle-orm";
+import { buildings, paymentAllocations, payments, shortcodes, tenants } from "@/db/schema";
 import { getDb } from "@/lib/db";
 import { normaliseRef } from "@/lib/format";
 
@@ -46,24 +46,46 @@ export async function applyPayment(paymentId: string, tenantId: string): Promise
   return "matched";
 }
 
-/** The active tenant whose account number equals what the payer typed (ignoring case, spaces and dashes). */
-export async function matchTenant(billRef: string | null): Promise<string | null> {
+/**
+ * The active tenant, in a building under this PAYBILL, whose account number equals what the payer typed
+ * (ignoring case, spaces and dashes). Tills never auto-match: they have no account number.
+ */
+export async function matchTenant(shortcodeId: string | null, billRef: string | null): Promise<string | null> {
   const ref = billRef ? normaliseRef(billRef) : "";
-  if (ref.length < 2) return null;
-  const rows = await getDb().select({ id: tenants.id, ref: tenants.accountRef }).from(tenants).where(eq(tenants.status, "active"));
-  return rows.find((r) => normaliseRef(r.ref) === ref)?.id ?? null;
+  if (!shortcodeId || ref.length < 2) return null;
+  const db = getDb();
+  const [sc] = await db.select({ type: shortcodes.type }).from(shortcodes).where(eq(shortcodes.id, shortcodeId)).limit(1);
+  if (!sc || sc.type !== "paybill") return null;
+  const rows = await db.select({ id: tenants.id, ref: tenants.accountRef }).from(tenants)
+    .innerJoin(buildings, eq(tenants.buildingId, buildings.id))
+    .where(and(eq(tenants.status, "active"), eq(buildings.shortcodeId, shortcodeId)));
+  return rows.find((r) => r.ref && normaliseRef(r.ref) === ref)?.id ?? null;
 }
 
-export async function matchPayment(paymentId: string, billRef: string | null): Promise<boolean> {
-  const tenantId = await matchTenant(billRef);
+export async function matchPayment(paymentId: string, shortcodeId: string | null, billRef: string | null): Promise<boolean> {
+  const tenantId = await matchTenant(shortcodeId, billRef);
   return tenantId ? (await applyPayment(paymentId, tenantId)) === "matched" : false;
 }
 
-/** Retries every unmatched payment, oldest first. Picks up payments whose tenant was added after they arrived. */
+/**
+ * Retries unmatched payments, oldest first. First links payments whose shortcode was added after they arrived,
+ * then re-tries paybill payments (a tenant may have been added since). Tills are skipped on purpose.
+ */
 export async function rematchUnmatched(): Promise<number> {
-  const rows = await getDb().select({ id: payments.id, billRef: payments.billRef }).from(payments)
-    .where(and(eq(payments.status, "unmatched"), isNotNull(payments.billRef))).orderBy(asc(payments.paidAt));
+  const db = getDb();
+  const all = await db.select().from(shortcodes);
+  const byNumber = new Map(all.map((s) => [s.number, s]));
+
+  const orphans = await db.select({ id: payments.id, number: payments.shortcodeNumber }).from(payments)
+    .where(and(eq(payments.status, "unmatched"), isNull(payments.shortcodeId), isNotNull(payments.shortcodeNumber)));
+  for (const o of orphans) {
+    const sc = o.number ? byNumber.get(o.number) : undefined;
+    if (sc) await db.update(payments).set({ shortcodeId: sc.id }).where(eq(payments.id, o.id));
+  }
+
+  const rows = await db.select({ id: payments.id, billRef: payments.billRef, shortcodeId: payments.shortcodeId }).from(payments)
+    .where(and(eq(payments.status, "unmatched"), isNotNull(payments.billRef), isNotNull(payments.shortcodeId))).orderBy(asc(payments.paidAt));
   let n = 0;
-  for (const r of rows) if (await matchPayment(r.id, r.billRef)) n++;
+  for (const r of rows) if (await matchPayment(r.id, r.shortcodeId, r.billRef)) n++;
   return n;
 }

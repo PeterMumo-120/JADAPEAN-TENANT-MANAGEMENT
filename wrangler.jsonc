@@ -43,8 +43,6 @@
 	"keep_vars": true,
 	"vars": {
 		"APP_URL": "https://jadapean-tenant-management.linktowork.workers.dev",
-		"MPESA_ENV": "sandbox",
-		"MPESA_SHORTCODE": "174379",
 		"SESSION_TTL_HOURS": "12",
 		"NEXT_PUBLIC_TURNSTILE_SITE_KEY": "0x4AAAAAAGHnAt5jvSai_yu3"
 	}
