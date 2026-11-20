@@ -89,6 +89,16 @@ export function eatStamp(d: Date): string {
 
 const NO_TRANSACTIONS = /retrieve transactions|no (available )?transactions|does not have any available/i;
 
+/** Daraja sometimes answers an empty period with a bare 500: {"RequestID":"…","ResponseCode":"","ResponseMessage":""}. */
+function isEmptyPeriod(e: DarajaError): boolean {
+  if (e.status !== 500) return false;
+  if (NO_TRANSACTIONS.test(e.body)) return true;
+  try {
+    const j = JSON.parse(e.body) as { ResponseCode?: string; ResponseMessage?: string };
+    return !j.ResponseCode && !j.ResponseMessage;
+  } catch { return false; }
+}
+
 /** Everything paid in the last 47 hours (Pull only goes back 48), following OffSetValue until a page comes back empty. */
 export async function pullTransactions(c: Creds, hours = 47): Promise<PullTransaction[]> {
   const end = new Date();
@@ -102,8 +112,8 @@ export async function pullTransactions(c: Creds, hours = 47): Promise<PullTransa
         ShortCode: c.number, StartDate: eatStamp(start), EndDate: eatStamp(end), OffSetValue: String(offset),
       });
     } catch (e) {
-      // Safaricom answers a quiet period with HTTP 500 "no transactions available". That is an empty result, not a failure.
-      if (e instanceof DarajaError && e.status === 500 && NO_TRANSACTIONS.test(e.body)) break;
+      // Safaricom answers a quiet period with an HTTP 500. That is an empty result, not a failure.
+      if (e instanceof DarajaError && isEmptyPeriod(e)) break;
       throw e;
     }
     const batch = (Array.isArray(r.Response) ? (r.Response as unknown[][]).flat() : []) as PullTransaction[];
