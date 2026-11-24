@@ -8,8 +8,9 @@ import { PageHeader } from "@/components/layout/page-header";
 import { PrimaryLink } from "@/components/layout/primary-link";
 import { TenantsTable, type TenantRow } from "@/components/tenants/tenants-table";
 
-export default async function TenantsPage() {
+export default async function TenantsPage({ searchParams }: { searchParams: Promise<{ filter?: string }> }) {
   await requireAdmin();
+  const initialFilter = (await searchParams).filter === "owing" ? "Owing" : "Active"; // the home screen links here with ?filter=owing
   const db = getDb();
   const [data, allBuildings] = await Promise.all([
     db.select({ t: tenants, building: buildings.name, area: buildings.address, sc: shortcodes }).from(tenants)
@@ -32,7 +33,7 @@ export default async function TenantsPage() {
     <>
       <PageHeader title="Tenants" description="Your residents across every building, all in one place."
         actions={rows.length ? <PrimaryLink href="/tenants/new">Add tenant</PrimaryLink> : undefined} />
-      <TenantsTable rows={rows} hasBuildings={allBuildings.length > 0} buildingOptions={allBuildings} />
+      <TenantsTable rows={rows} hasBuildings={allBuildings.length > 0} buildingOptions={allBuildings} initialFilter={initialFilter} />
     </>
   );
 }

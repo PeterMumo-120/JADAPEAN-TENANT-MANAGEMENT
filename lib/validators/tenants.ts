@@ -23,6 +23,8 @@ export const tenantSchema = z.object({
     .refine((v) => !v || v.length >= 2, "Enter at least 2 characters")
     .refine((v) => !v || /^[A-Za-z0-9-]+$/.test(v), "Letters, numbers and dashes only")
     .optional().transform((v) => (v ? v.toUpperCase() : undefined)),
+  // Till buildings only: other names or numbers that pay this tenant's rent, e.g. "Peter Kamau, 0722 111 126". Used to suggest matches.
+  alsoPaysFrom: z.string().trim().max(120, "Keep it under 120 characters").optional().transform((v) => v || undefined),
   moveInDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Pick the move-in date").refine((v) => !Number.isNaN(Date.parse(v)), "Pick a valid date"),
 });
 export type TenantInput = z.input<typeof tenantSchema>;

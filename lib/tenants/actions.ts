@@ -28,7 +28,7 @@ function failure(e: unknown): ActionResult {
 }
 
 type Rules = { excludeId?: string; active: boolean; buildingChanged: boolean; creating: boolean };
-type Checked = { errors: Record<string, string> | null; accountRef: string | null };
+type Checked = { errors: Record<string, string> | null; accountRef: string | null; isTill: boolean };
 
 /**
  * Business rules the schema can't express. Returns field errors (or null) and the account number to store:
@@ -38,7 +38,7 @@ async function check(v: TenantValues, o: Rules): Promise<Checked> {
   const db = getDb();
   const errors: Record<string, string> = {};
   const [row] = await db.select({ b: buildings, sc: shortcodes }).from(buildings).leftJoin(shortcodes, eq(buildings.shortcodeId, shortcodes.id)).where(eq(buildings.id, v.buildingId)).limit(1);
-  if (!row) return { errors: { buildingId: "That building no longer exists." }, accountRef: null };
+  if (!row) return { errors: { buildingId: "That building no longer exists." }, accountRef: null, isTill: false };
   const { b, sc } = row;
   const others = o.excludeId ? ne(tenants.id, o.excludeId) : undefined;
 
@@ -72,7 +72,7 @@ async function check(v: TenantValues, o: Rules): Promise<Checked> {
       }
     }
   }
-  return { errors: Object.keys(errors).length ? errors : null, accountRef };
+  return { errors: Object.keys(errors).length ? errors : null, accountRef, isTill: sc?.type === "till" };
 }
 
 export async function createTenant(input: unknown): Promise<ActionResult & { id?: string }> {
@@ -82,11 +82,11 @@ export async function createTenant(input: unknown): Promise<ActionResult & { id?
   if (!parsed.success) return { ok: false, message: fixFields, fieldErrors: toFieldErrors(parsed.error) };
   const v = parsed.data;
   try {
-    const { errors, accountRef } = await check(v, { active: true, buildingChanged: true, creating: true });
+    const { errors, accountRef, isTill } = await check(v, { active: true, buildingChanged: true, creating: true });
     if (errors) return { ok: false, message: fixFields, fieldErrors: errors };
     const [row] = await getDb().insert(tenants).values({
       name: v.name, nationalId: v.nationalId, phone: v.phone, buildingId: v.buildingId, houseNo: v.houseNo ?? null,
-      rentAmount: v.rentAmount, accountRef, moveInDate: v.moveInDate,
+      rentAmount: v.rentAmount, accountRef, alsoPaysFrom: isTill ? v.alsoPaysFrom ?? null : null, moveInDate: v.moveInDate,
     }).returning({ id: tenants.id });
     await audit(me.adminId, "tenant.create", row.id);
     // Payments that arrived before this tenant existed can match now (paybill payments only).
@@ -119,11 +119,11 @@ export async function updateTenant(id: string, input: unknown): Promise<ActionRe
       }
     }
 
-    const { errors, accountRef } = await check(v, { excludeId: id, active: cur.status === "active", buildingChanged, creating: false });
+    const { errors, accountRef, isTill } = await check(v, { excludeId: id, active: cur.status === "active", buildingChanged, creating: false });
     if (errors) return { ok: false, message: fixFields, fieldErrors: errors };
     await db.update(tenants).set({
       name: v.name, nationalId: v.nationalId, phone: v.phone, buildingId: v.buildingId, houseNo: v.houseNo ?? null,
-      rentAmount: v.rentAmount, accountRef, moveInDate: v.moveInDate, updatedAt: new Date(),
+      rentAmount: v.rentAmount, accountRef, alsoPaysFrom: isTill ? v.alsoPaysFrom ?? null : null, moveInDate: v.moveInDate, updatedAt: new Date(),
     }).where(eq(tenants.id, id));
     await audit(me.adminId, "tenant.update", id);
     if (accountRef !== cur.accountRef) await rematchUnmatched().catch((e) => console.error("[tenants] rematch", e));

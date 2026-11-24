@@ -61,6 +61,8 @@ export const shortcodes = sqliteTable("shortcodes", {
   consumerKey: text("consumer_key"),
   consumerSecretEnc: text("consumer_secret_enc"), // never returned to the browser
   nominatedNumber: text("nominated_number"), // Safaricom MSISDN used for Pull registration
+  // Tills only: how aggressively till payments are auto-assigned. "off" = never auto-assign (suggestions still shown).
+  matchMode: text("match_mode", { enum: ["off", "balanced", "strict"] }).notNull().default("strict"),
   active: integer("active", { mode: "boolean" }).notNull().default(true),
   urlsRegisteredAt: integer("urls_registered_at", { mode: "timestamp" }),
   pullRegisteredAt: integer("pull_registered_at", { mode: "timestamp" }),
@@ -92,6 +94,7 @@ export const tenants = sqliteTable("tenants", {
   houseNo: text("house_no"), // optional
   rentAmount: integer("rent_amount").notNull(), // whole KES
   accountRef: text("account_ref"), // paybill account number tenants type. NULL for till buildings. Unique per shortcode (checked in the app)
+  alsoPaysFrom: text("also_pays_from"), // till buildings: other names or numbers that pay this tenant's rent (a spouse, a relative)
   moveInDate: text("move_in_date").notNull(), // YYYY-MM-DD
   status: text("status", { enum: ["active", "moved_out"] }).notNull().default("active"),
   paidThrough: text("paid_through"), // "YYYY-MM", denormalised for fast dashboards
@@ -105,6 +108,26 @@ export const tenants = sqliteTable("tenants", {
   index("tenants_phone_idx").on(t.phone),
   // a house can only have one ACTIVE tenant; NULL house numbers are allowed freely
   uniqueIndex("tenants_active_house_uq").on(t.buildingId, t.houseNo).where(sql`status = 'active'`),
+]);
+
+/**
+ * What the app has learned about who pays for whom on a TILL. The fingerprint is the payer's M-Pesa name plus the
+ * masked phone number ("MWANGI WANJIKU|2547***126"). `blocked` rows record an Undo: "this payer is NOT that tenant".
+ */
+export const payerAliases = sqliteTable("payer_aliases", {
+  id: id(),
+  shortcodeId: text("shortcode_id").notNull().references(() => shortcodes.id),
+  tenantId: text("tenant_id").notNull().references(() => tenants.id, { onDelete: "cascade" }),
+  fingerprint: text("fingerprint").notNull(),
+  payerName: text("payer_name"),
+  maskedMsisdn: text("masked_msisdn"),
+  confirmedCount: integer("confirmed_count").notNull().default(0),
+  blocked: integer("blocked", { mode: "boolean" }).notNull().default(false),
+  lastSeenAt: integer("last_seen_at", { mode: "timestamp" }).notNull().default(sql`(unixepoch())`),
+  createdAt: createdAt(),
+}, (t) => [
+  uniqueIndex("payer_alias_uq").on(t.shortcodeId, t.tenantId, t.fingerprint),
+  index("payer_alias_lookup_idx").on(t.shortcodeId, t.fingerprint),
 ]);
 
 /* ───────────── M-Pesa ───────────── */
@@ -121,6 +144,10 @@ export const payments = sqliteTable("payments", {
   paidAt: integer("paid_at", { mode: "timestamp" }).notNull(),
   tenantId: text("tenant_id").references(() => tenants.id),
   status: text("status", { enum: ["matched", "unmatched", "ignored"] }).notNull().default("unmatched"),
+  // How it was matched. "learned" / "scored" / "phone" are automatic till matches that can be confirmed or undone.
+  matchMethod: text("match_method", { enum: ["account", "learned", "scored", "phone", "manual"] }),
+  matchReason: text("match_reason"), // e.g. "name + phone digits + rent amount"
+  autoTried: integer("auto_tried", { mode: "boolean" }).notNull().default(false), // till auto-matching already looked at this payment
   source: text("source", { enum: ["c2b", "reconcile", "manual"] }).notNull().default("c2b"),
   raw: text("raw"), // original JSON payload
   createdAt: createdAt(),

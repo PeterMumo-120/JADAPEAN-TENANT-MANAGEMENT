@@ -18,8 +18,8 @@ export default async function SettingsPage() {
             <div className="flex items-center gap-3 px-5 py-4">
               <span className="metric-icon"><Landmark className="size-4" /></span>
               <div className="min-w-0 flex-1">
-                <h2 className="text-[13px] font-medium">Paybills & Tills</h2>
-                <p className="mt-0.5 text-xs text-muted-foreground">Add the M-Pesa numbers you collect rent on and connect each one’s Daraja app.</p>
+                <h2 className="text-[15px] font-medium">Payment numbers <span className="ml-1 rounded-full bg-muted px-2 py-0.5 text-xs font-normal text-muted-foreground">Advanced</span></h2>
+                <p className="mt-0.5 text-xs text-muted-foreground">The paybill and till numbers tenants pay to, and how each connects to M-Pesa. Set-up only.</p>
               </div>
               <ChevronRight className="size-4 text-muted-foreground" />
             </div>

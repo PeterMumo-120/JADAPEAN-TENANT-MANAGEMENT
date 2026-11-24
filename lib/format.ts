@@ -19,14 +19,6 @@ export function todayEA(now = new Date()): string {
 /** Canonical form used to compare account numbers: "kc-b 204" and "KCB204" are the same. */
 export const normaliseRef = (s: string) => s.toUpperCase().replace(/[\s-]/g, "");
 
-/** Suggested paybill account number from the building and house, e.g. Kijani Court + B-204 -> KC-B-204. */
-export function suggestAccountRef(buildingName: string, houseNo?: string): string {
-  const house = (houseNo ?? "").toUpperCase().replace(/[^A-Z0-9-]/g, "");
-  if (!house) return "";
-  const words = buildingName.trim().split(/\s+/).filter(Boolean);
-  const prefix = (words.length > 1 ? words.map((w) => w[0]).join("") : (words[0] ?? "").slice(0, 3)).toUpperCase().replace(/[^A-Z0-9]/g, "");
-  return `${prefix}-${house}`.slice(0, 20);
-}
 
 const EAT = "Africa/Nairobi";
 /** "Today, 2:14 PM", "Yesterday, 9:02 AM" or "12 Nov, 4:30 PM" in Nairobi time. */

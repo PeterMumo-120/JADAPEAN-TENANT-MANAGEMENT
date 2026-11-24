@@ -30,7 +30,7 @@
 .page-footer {
   margin-top: auto; padding-top: 40px;
   display: flex; justify-content: space-between; gap: 12px;
-  font-size: 12px; color: var(--muted-foreground);
+  font-size: calc(12px * var(--ts)); color: var(--muted-foreground);
 }
 
 @media (min-width: 1024px) {
@@ -54,7 +54,7 @@
 .nav-item {
   display: flex; align-items: center; gap: 12px;
   padding: 10px 12px; border-radius: 10px;
-  font-size: 14px; font-weight: 500; color: rgb(255 255 255 / 0.72);
+  font-size: calc(14px * var(--ts)); font-weight: 500; color: rgb(255 255 255 / 0.72);
   transition: background-color 0.15s, color 0.15s;
 }
 .nav-item:hover { background: rgb(255 255 255 / 0.07); color: #fff; }
@@ -70,14 +70,14 @@
 }
 .panel-card { padding-bottom: 4px; }
 
-.eyebrow { font-size: 13px; font-weight: 500; color: var(--muted-foreground); }
+.eyebrow { font-size: calc(13px * var(--ts)); font-weight: 500; color: var(--muted-foreground); }
 .metric-icon {
   display: grid; place-items: center; width: 32px; height: 32px; border-radius: 9px;
   background: var(--accent); color: var(--primary);
 }
 .trend-pill {
   display: inline-flex; align-items: center; gap: 4px;
-  padding: 3px 8px; border-radius: 6px; font-size: 12px; font-weight: 500;
+  padding: 3px 8px; border-radius: 6px; font-size: calc(12px * var(--ts)); font-weight: 500;
 }
 .trend-up { background: var(--accent); color: var(--primary); }
 .trend-flat { background: var(--muted); color: var(--muted-foreground); }
@@ -95,14 +95,14 @@
 
 /* ---------- Bar chart (axis 0 to 10M) ---------- */
 .chart-area { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 12px; height: 260px; padding: 20px 0 26px; }
-.chart-y-axis { display: flex; flex-direction: column; justify-content: space-between; font-size: 12px; color: var(--muted-foreground); text-align: right; }
+.chart-y-axis { display: flex; flex-direction: column; justify-content: space-between; font-size: calc(12px * var(--ts)); color: var(--muted-foreground); text-align: right; }
 .chart-y-axis span { height: 0; display: flex; align-items: center; justify-content: flex-end; line-height: 1; }
 .chart-plot { position: relative; }
 .chart-gridlines { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: space-between; }
 .chart-gridlines i { display: block; height: 0; border-top: 1px dashed var(--border); }
 .bars { position: absolute; inset: 0; display: flex; gap: 12px; }
 .bar-column { position: relative; flex: 1; height: 100%; display: flex; align-items: flex-end; justify-content: center; }
-.bar-column span { position: absolute; bottom: -24px; font-size: 12px; color: var(--muted-foreground); }
+.bar-column span { position: absolute; bottom: -24px; font-size: calc(12px * var(--ts)); color: var(--muted-foreground); }
 .bar { width: min(48px, 72%); border-radius: 6px 6px 0 0; background: var(--chart-1); transition: background-color 0.15s; }
 .bar:hover { background: var(--chart-3); }
 .bar-current, .bar-current:hover { background: var(--primary); }
@@ -122,7 +122,7 @@
 .attention-row { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 10px; background: var(--muted); transition: background-color 0.15s; }
 .attention-row:hover { background: var(--accent); }
 
-.avatar-initials { display: inline-grid; place-items: center; flex-shrink: 0; border-radius: 999px; font-size: 12px; font-weight: 600; }
+.avatar-initials { display: inline-grid; place-items: center; flex-shrink: 0; border-radius: 999px; font-size: calc(12px * var(--ts)); font-weight: 600; }
 
 /* ---------- Building cards (flat tonal greens) ---------- */
 .building-cover { display: flex; align-items: flex-start; justify-content: space-between; height: 112px; padding: 14px; color: #fff; }
@@ -159,3 +159,84 @@
 .sidebar-scroll { scrollbar-width: thin; scrollbar-color: rgb(255 255 255 / 0.25) transparent; }
 .sidebar-scroll::-webkit-scrollbar { width: 6px; }
 .sidebar-scroll::-webkit-scrollbar-thumb { background: rgb(255 255 255 / 0.22); border-radius: 999px; }
+
+/* ---------- Collapsible sidebar (lg and up). Open by default. ---------- */
+.nav-item { position: relative; }
+.nav-item-collapsed { justify-content: center; gap: 0; padding-left: 0; padding-right: 0; }
+@media (min-width: 1024px) {
+  .sidebar { transition: width 0.2s ease; }
+  .main-area { transition: margin-left 0.2s ease; }
+  .app-shell[data-sidebar="collapsed"] .sidebar { width: 76px; }
+  .app-shell[data-sidebar="collapsed"] .main-area { margin-left: 76px; }
+}
+@media (prefers-reduced-motion: reduce) { .sidebar, .main-area { transition: none; } }
+
+/* ---------- Easy reading: text size, touch targets, phone bottom bar ---------- */
+/* Text is a little larger than before by default, and "Bigger text" in the top bar scales everything up again. */
+:root { --ts: 1.0625; --text-xs: 0.8125rem; }
+html { font-size: 17px; }
+html[data-text="large"] { font-size: 20px; --ts: 1.25; }
+body { line-height: 1.5; }
+
+/* Fixed-pixel text sizes used across the app follow the same scale. */
+.text-\[13px\] { font-size: calc(13px * var(--ts)); }
+.text-\[15px\] { font-size: calc(15px * var(--ts)); }
+.text-\[18px\] { font-size: calc(18px * var(--ts)); }
+.text-\[19px\] { font-size: calc(19px * var(--ts)); }
+.text-\[22px\] { font-size: calc(22px * var(--ts)); }
+.text-\[24px\] { font-size: calc(24px * var(--ts)); }
+.text-\[25px\] { font-size: calc(25px * var(--ts)); }
+.text-\[26px\] { font-size: calc(26px * var(--ts)); }
+.text-\[30px\] { font-size: calc(30px * var(--ts)); }
+.text-\[32px\] { font-size: calc(32px * var(--ts)); }
+@media (min-width: 640px) { .sm\:text-\[36px\] { font-size: calc(36px * var(--ts)); } }
+
+/* Phones and tablets: comfortably large tap targets, and inputs that don't make the browser zoom in. */
+@media (pointer: coarse) {
+  [data-slot="button"] { min-height: 44px; min-width: 44px; }
+  [data-slot="input"], select, textarea { min-height: 44px; font-size: 1rem; }
+}
+
+/* Bottom bar (below lg). */
+.bottom-nav {
+  position: fixed; inset: auto 0 0 0; z-index: 30;
+  display: grid; grid-template-columns: repeat(4, 1fr);
+  background: #fff; border-top: 1px solid var(--border);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  box-shadow: 0 -4px 16px rgb(20 35 29 / 0.06);
+}
+.bottom-nav-item {
+  position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
+  min-height: 66px; padding: 8px 4px;
+  font-size: calc(13px * var(--ts)); font-weight: 600; color: var(--muted-foreground);
+  background: transparent; border: 0; cursor: pointer;
+}
+.bottom-nav-item[data-active="true"] { color: var(--primary); }
+.bottom-nav-item[data-active="true"]::before { content: ""; position: absolute; top: 0; left: 24%; right: 24%; height: 3px; border-radius: 0 0 3px 3px; background: var(--primary); }
+.bottom-nav-item:focus-visible { outline: 2px solid var(--ring); outline-offset: -2px; }
+.bottom-nav-badge {
+  position: absolute; top: -6px; right: -12px; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 999px;
+  display: grid; place-items: center; background: var(--destructive); color: #fff; font-size: 11px; font-weight: 700; line-height: 1;
+}
+@media (min-width: 1024px) { .bottom-nav { display: none; } }
+@media (max-width: 1023px) {
+  .page-wrap { padding-bottom: calc(110px + env(safe-area-inset-bottom, 0px)); }
+  /* keep toast messages clear of the bottom bar */
+  [data-sonner-toaster] { --offset-bottom: 90px; --mobile-offset-bottom: 90px; }
+}
+
+/* ---------- Home: "Today" cards ---------- */
+.today-icon { display: grid; place-items: center; flex-shrink: 0; width: 48px; height: 48px; border-radius: 14px; background: var(--accent); color: var(--primary); }
+.today-warn { border-color: color-mix(in srgb, #b7791f 35%, white); }
+.today-warn .today-icon { background: #fdf0d5; color: #8a5a00; }
+.today-ok .today-icon { background: var(--accent); color: var(--primary); }
+.today-button {
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  min-height: 52px; width: 100%; border-radius: 12px;
+  background: var(--primary); color: #fff; font-size: calc(16px * var(--ts)); font-weight: 600;
+  transition: background-color 0.15s;
+}
+.today-button:hover { background: color-mix(in srgb, var(--primary) 88%, black); }
+.today-button:focus-visible { outline: 3px solid var(--ring); outline-offset: 2px; }
+.today-ok .today-button { background: var(--accent); color: var(--primary); }
+.today-ok .today-button:hover { background: color-mix(in srgb, var(--accent) 80%, var(--primary)); }

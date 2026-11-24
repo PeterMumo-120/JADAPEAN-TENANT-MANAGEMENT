@@ -21,7 +21,7 @@ export default async function EditShortcodePage({ params }: { params: Promise<{ 
     <>
       <PageHeader title={s.label} description="Update this paybill or till and its Daraja credentials." />
       <div className="mt-6 max-w-2xl">
-        <ShortcodeForm shortcode={{ id: s.id, label: s.label, type: s.type, number: s.number, env: s.env, consumerKey: s.consumerKey, hasSecret: !!s.consumerSecretEnc, nominatedNumber: s.nominatedNumber, locked: (b?.n ?? 0) + (p?.n ?? 0) > 0 }} />
+        <ShortcodeForm shortcode={{ id: s.id, label: s.label, type: s.type, number: s.number, env: s.env, consumerKey: s.consumerKey, hasSecret: !!s.consumerSecretEnc, nominatedNumber: s.nominatedNumber, matchMode: s.matchMode, locked: (b?.n ?? 0) + (p?.n ?? 0) > 0 }} />
       </div>
     </>
   );

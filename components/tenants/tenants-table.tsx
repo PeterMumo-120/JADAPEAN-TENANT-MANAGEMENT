@@ -20,28 +20,29 @@ export type TenantRow = {
 };
 
 const PAGE_SIZE = 8;
-const FILTERS = ["Active", "Paid", "Pending", "Overdue", "Moved out"] as const;
+const FILTERS = ["Active", "Owing", "Paid", "Pending", "Overdue", "Moved out"] as const;
+export type TenantFilter = (typeof FILTERS)[number];
 
 const selectClass = "h-11 w-full rounded-lg border border-input bg-card px-3 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/30 md:h-9 md:w-[170px] md:text-xs";
 
 /** Search, filter and paging run in the browser, which is fine for a few hundred tenants. */
-export function TenantsTable({ rows, hasBuildings, buildingOptions }: { rows: TenantRow[]; hasBuildings: boolean; buildingOptions: { id: string; name: string }[] }) {
+export function TenantsTable({ rows, hasBuildings, buildingOptions, initialFilter = "Active" }: { rows: TenantRow[]; hasBuildings: boolean; buildingOptions: { id: string; name: string }[]; initialFilter?: TenantFilter }) {
   const [search, setSearch] = useState("");
-  const [filter, setFilter] = useState<(typeof FILTERS)[number]>("Active");
+  const [filter, setFilter] = useState<TenantFilter>(initialFilter);
   const [building, setBuilding] = useState("");
   const [page, setPage] = useState(1);
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     return rows.filter((t) =>
-      (filter === "Active" ? t.status !== "Moved out" : t.status === filter) &&
+      (filter === "Active" ? t.status !== "Moved out" : filter === "Owing" ? t.status !== "Moved out" && t.balance > 0 : t.status === filter) &&
       (!building || t.buildingId === building) &&
       (!q || [t.name, t.houseNo ?? "", t.phone, t.building, t.payVia].some((f) => f.toLowerCase().includes(q))));
   }, [rows, search, filter, building]);
 
   const counts = useMemo(() => {
-    const c: Record<string, number> = { Active: 0, Paid: 0, Pending: 0, Overdue: 0, "Moved out": 0 };
-    for (const t of rows) { if (t.status !== "Moved out") c.Active++; c[t.status]++; }
+    const c: Record<string, number> = { Active: 0, Owing: 0, Paid: 0, Pending: 0, Overdue: 0, "Moved out": 0 };
+    for (const t of rows) { if (t.status !== "Moved out") { c.Active++; if (t.balance > 0) c.Owing++; } c[t.status]++; }
     return c;
   }, [rows]);
 

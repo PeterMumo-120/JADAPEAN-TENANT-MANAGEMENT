@@ -1,5 +1,6 @@
 import { Check, Clock3 } from "lucide-react";
 import { money } from "@/lib/format";
+import { MatchBadge } from "@/components/payments/match-badge";
 import type { PaymentItem } from "@/lib/payments/queries";
 
 export function PaymentRows({ items }: { items: PaymentItem[] }) {
@@ -15,6 +16,7 @@ export function PaymentRows({ items }: { items: PaymentItem[] }) {
             <div className="mt-1 truncate text-xs text-muted-foreground">
               {payment.unit} · {payment.building}{payment.via ? ` · ${payment.via}` : ""} <span className="mx-1 text-border">·</span><span className="font-mono">{payment.receipt}</span>
             </div>
+            {payment.autoMethod && <MatchBadge paymentId={payment.id} reason={payment.autoReason} />}
           </div>
           <div className="text-right">
             <div className="text-xs font-semibold">{money(payment.amount)}</div>

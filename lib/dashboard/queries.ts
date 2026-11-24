@@ -2,7 +2,7 @@ import { eq, inArray, sum } from "drizzle-orm";
 import { buildings, paymentAllocations, tenants } from "@/db/schema";
 import { getDb } from "@/lib/db";
 import { getBuildingStats } from "@/lib/buildings/queries";
-import { getRecentPayments } from "@/lib/payments/queries";
+import { getRecentPayments, getUnmatchedSummary } from "@/lib/payments/queries";
 import { prevPeriod } from "@/lib/payments/allocate";
 import { currentPeriod, rentSummary } from "@/lib/tenants/status";
 
@@ -14,12 +14,13 @@ export async function getDashboardData() {
   const periods = [period];
   for (let i = 0; i < 5; i++) periods.unshift(prevPeriod(periods[0]));
 
-  const [tenantRows, trendRows, recent, buildingStats] = await Promise.all([
+  const [tenantRows, trendRows, recent, buildingStats, unmatched] = await Promise.all([
     db.select({ t: tenants, building: buildings.name }).from(tenants).innerJoin(buildings, eq(tenants.buildingId, buildings.id)).where(eq(tenants.status, "active")),
     db.select({ period: paymentAllocations.period, total: sum(paymentAllocations.amount) }).from(paymentAllocations)
       .where(inArray(paymentAllocations.period, periods)).groupBy(paymentAllocations.period),
     getRecentPayments(4),
     getBuildingStats(),
+    getUnmatchedSummary(),
   ]);
 
   const trend = periods.map((p) => ({ month: monthLabel(p), value: Number(trendRows.find((r) => r.period === p)?.total ?? 0) }));
@@ -39,7 +40,7 @@ export async function getDashboardData() {
     overdue: rows.filter((r) => r.s.status === "Overdue").length,
     occupied: rows.length, totalUnits, vacant: Math.max(totalUnits - rows.length, 0),
     newThisMonth: rows.filter((r) => r.t.moveInDate.startsWith(period)).length,
-    trend, buildings: buildingStats, recent,
+    trend, buildings: buildingStats, recent, unmatched,
     attention: behind.slice(0, 3).map(({ t, building, s }) => {
       const parts = t.name.trim().split(/\s+/);
       return { id: t.id, name: t.name, initials: ((parts[0]?.[0] ?? "") + (parts[1]?.[0] ?? "")).toUpperCase(), unit: t.houseNo ?? "No house number",

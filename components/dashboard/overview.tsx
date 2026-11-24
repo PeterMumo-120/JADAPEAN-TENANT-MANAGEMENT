@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { PrimaryLink } from "@/components/layout/primary-link";
 import { PaymentRows } from "@/components/payments/payment-rows";
+import { Today } from "@/components/dashboard/today";
 import { getDashboardData } from "@/lib/dashboard/queries";
 import { compactNumber, money } from "@/lib/format";
 
@@ -31,7 +32,10 @@ export async function Overview() {
   const axisMax = niceMax(Math.max(...d.trend.map((t) => t.value)));
 
   return (
-    <div className="flex flex-col gap-5 pt-7">
+    <div className="flex flex-col gap-5 pt-6">
+      <Today owing={{ tenants: d.outstandingTenants, amount: d.outstanding }} unmatched={d.unmatched} collected={d.collected} expected={d.expected} />
+
+      <h2 className="mt-3 font-display text-[22px] font-medium tracking-tight">More details</h2>
       <div className="metric-grid">
         {metrics.map(({ label, value, note, trend, tone, icon: Icon }) => (
           <Card key={label} className="metric-card">

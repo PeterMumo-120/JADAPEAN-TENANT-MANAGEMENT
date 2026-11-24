@@ -38,9 +38,9 @@ export function BuildingForm({ building, shortcodes }: { building?: BuildingForm
   if (!building && shortcodes.length === 0) {
     return (
       <Card className="panel-card">
-        <EmptyState icon={Landmark} title="Add a paybill or till first"
-          description="Every building collects rent on one paybill or till. Add yours, then come back to create the building."
-          action={<PrimaryLink href="/shortcodes/new">Add paybill or till</PrimaryLink>} />
+        <EmptyState icon={Landmark} title="Add a payment number first"
+          description="Every building is linked to the M-Pesa number its tenants pay rent to. Add that number, then come back to create the building."
+          action={<PrimaryLink href="/shortcodes/new">Add payment number</PrimaryLink>} />
       </Card>
     );
   }
@@ -80,7 +80,7 @@ export function BuildingForm({ building, shortcodes }: { building?: BuildingForm
 
         {locked ? (
           <div>
-            <p className="text-xs font-medium">Paybill or till</p>
+            <p className="text-xs font-medium">Rent is paid to</p>
             <div className="mt-1.5 flex items-center gap-2 rounded-lg border border-border bg-muted/50 px-3 py-2 text-sm">
               <Lock className="size-3.5 text-muted-foreground" />
               {lockedShortcode ? <span>{lockedShortcode.label} <span className="font-mono text-xs text-muted-foreground">· {typeName(lockedShortcode.type)} {lockedShortcode.number}</span></span> : <span className="text-muted-foreground">Attached</span>}
@@ -88,10 +88,10 @@ export function BuildingForm({ building, shortcodes }: { building?: BuildingForm
             <p className="mt-1.5 text-xs text-muted-foreground">This can’t be changed. To collect on a different paybill or till, add a new building and archive this one.</p>
           </div>
         ) : (
-          <FormField label="Paybill or till" htmlFor="shortcodeId" error={e.shortcodeId?.message}
-            hint={chosen ? (chosen.type === "paybill" ? "Tenants will need an account number. Payments match to them automatically." : "No account numbers. You mark tenants as paid yourself.") : building ? "This building has none yet. Once you pick one it is permanent." : "Permanent once the building is created."}>
+          <FormField label="Rent is paid to" htmlFor="shortcodeId" error={e.shortcodeId?.message}
+            hint={chosen ? (chosen.type === "paybill" ? "Each tenant gets an account number to type when paying. Payments are matched to them automatically." : "Tenants pay to a till, so there is no account number. The app suggests who each payment is from, and you check it.") : building ? "This building has none yet. Once you pick one it is permanent." : "Permanent once the building is created."}>
             <select id="shortcodeId" className={selectClass} aria-invalid={!!e.shortcodeId} {...form.register("shortcodeId")}>
-              <option value="">Select a paybill or till</option>
+              <option value="">Choose the M-Pesa number</option>
               {shortcodes.map((s) => <option key={s.id} value={s.id}>{s.label} — {typeName(s.type)} {s.number}</option>)}
             </select>
           </FormField>

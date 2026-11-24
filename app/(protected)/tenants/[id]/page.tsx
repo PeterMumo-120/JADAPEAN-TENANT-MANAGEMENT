@@ -14,6 +14,8 @@ import { PageHeader } from "@/components/layout/page-header";
 import { ShortcodeBadge } from "@/components/shortcodes/shortcode-badge";
 import { StatusBadge } from "@/components/tenants/status-badge";
 import { TenantActions } from "@/components/tenants/tenant-actions";
+import { KnownPayers } from "@/components/tenants/known-payers";
+import { MatchBadge } from "@/components/payments/match-badge";
 
 const monthName = (p: string) => { const [y, m] = p.split("-").map(Number); return new Date(Date.UTC(y, m - 1, 1)).toLocaleString("en-GB", { month: "short", year: "numeric", timeZone: "UTC" }); };
 const SOURCE = { c2b: "M-Pesa", reconcile: "M-Pesa (synced)", manual: "Marked manually" } as const;
@@ -35,6 +37,7 @@ export default async function TenantPage({ params }: { params: Promise<{ id: str
     ["House", t.houseNo ?? "Not set"],
     ["Moved in", dateEA(`${t.moveInDate}T12:00:00+03:00`)],
     ["Paid through", t.paidThrough ? monthName(t.paidThrough) : "Nothing paid yet"],
+    ...(sc?.type === "till" && t.alsoPaysFrom ? [["Also pays from", t.alsoPaysFrom] as [string, React.ReactNode]] : []),
   ];
 
   return (
@@ -83,11 +86,22 @@ export default async function TenantPage({ params }: { params: Promise<{ id: str
               ) : (
                 <>
                   <p className="text-muted-foreground">Till <span className="font-mono text-foreground">{sc.number}</span></p>
-                  <p className="mt-2 text-xs text-muted-foreground">Till payments carry no account number, so they are never matched automatically. Use <strong>Mark as paid</strong>, or assign the payment from the Payments page.</p>
+                  <p className="mt-2 text-xs text-muted-foreground">Till payments carry no account number, so they are matched from the payer’s name, phone digits and amount. Anything unsure waits in the till inbox on the Payments page, or use <strong>Mark as paid</strong>.</p>
                 </>
               )}
             </div>
           </Card>
+
+          {sc?.type === "till" && (
+            <Card className="panel-card">
+              <div className="border-b px-4 py-4 sm:px-5">
+                <h2 className="font-display text-[18px]">Known payers</h2>
+                <p className="mt-1 text-xs text-muted-foreground">People the app recognises as paying this tenant’s rent. It learns from payments you assign or confirm.</p>
+              </div>
+              {d.aliases.length === 0 ? <p className="px-4 py-4 text-xs text-muted-foreground sm:px-5">None yet. The first payment from each payer is assigned by you.</p>
+                : <KnownPayers payers={d.aliases.map((a) => ({ id: a.id, name: a.payerName, masked: a.maskedMsisdn, confirmed: a.confirmedCount, blocked: a.blocked }))} />}
+            </Card>
+          )}
         </div>
 
         <Card className="panel-card self-start">
@@ -99,6 +113,7 @@ export default async function TenantPage({ params }: { params: Promise<{ id: str
                   <div className="min-w-0">
                     <div className="truncate font-mono text-xs font-medium">{p.receipt}</div>
                     <div className="mt-1 text-xs text-muted-foreground">{p.time} · {SOURCE[p.source]}</div>
+                    {p.autoMethod && <MatchBadge paymentId={p.id} reason={p.autoReason} />}
                     {p.periods.length > 0 && <div className="mt-1.5 flex flex-wrap gap-1">{p.periods.map((m) => <Badge key={m} variant="secondary" className="font-normal">{monthName(m)}</Badge>)}</div>}
                   </div>
                   <div className="text-sm font-semibold">{money(p.amount)}</div>

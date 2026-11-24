@@ -16,7 +16,7 @@ import { createShortcode, updateShortcode } from "@/lib/shortcodes/actions";
 
 export type ShortcodeFormData = {
   id: string; label: string; type: "paybill" | "till"; number: string; env: "sandbox" | "production";
-  consumerKey: string | null; hasSecret: boolean; nominatedNumber: string | null; locked: boolean;
+  consumerKey: string | null; hasSecret: boolean; nominatedNumber: string | null; matchMode: "off" | "balanced" | "strict"; locked: boolean;
 };
 
 const selectClass = "h-9 w-full rounded-lg border border-input bg-card px-3 text-sm outline-none transition-colors focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/30 aria-invalid:border-destructive disabled:opacity-50";
@@ -29,10 +29,17 @@ export function ShortcodeForm({ shortcode }: { shortcode?: ShortcodeFormData }) 
     defaultValues: {
       label: shortcode?.label ?? "", type: shortcode?.type ?? ("" as "paybill"), number: shortcode?.number ?? "", env: shortcode?.env ?? ("" as "sandbox"),
       consumerKey: shortcode?.consumerKey ?? "", consumerSecret: "", nominatedNumber: shortcode?.nominatedNumber ?? "",
+      matchMode: shortcode && shortcode.type === "till" ? shortcode.matchMode : "",
     },
   });
   const e = form.formState.errors;
   const type = form.watch("type");
+  const mode = form.watch("matchMode");
+  const MODE_HINT: Record<string, string> = {
+    strict: "Assigns automatically only for a payer you have confirmed before, or when both the name and the phone digits match one tenant. Safest.",
+    balanced: "Also assigns when one tenant clearly stands out on name, phone digits and amount. Faster, with a little more risk.",
+    off: "Never assigns by itself. You still get a suggested tenant for each payment.",
+  };
 
   function submit(values: ShortcodeValues) {
     start(async () => {
@@ -74,6 +81,18 @@ export function ShortcodeForm({ shortcode }: { shortcode?: ShortcodeFormData }) 
             <Input id="number" inputMode="numeric" placeholder="e.g. 400200" disabled={shortcode?.locked} className="font-mono" {...form.register("number")} aria-invalid={!!e.number} />
           </FormField>
         </div>
+
+        {type === "till" && (
+          <FormField label="Till payment matching" htmlFor="matchMode" error={e.matchMode?.message}
+            hint={typeof mode === "string" && MODE_HINT[mode] ? MODE_HINT[mode] : "Tills have no account number, so payments are matched from the payer’s details. Every automatic match can be undone."}>
+            <select id="matchMode" className={selectClass} aria-invalid={!!e.matchMode} {...form.register("matchMode")}>
+              <option value="">Select a mode</option>
+              <option value="strict">Strict (recommended)</option>
+              <option value="balanced">Balanced</option>
+              <option value="off">Off (suggestions only)</option>
+            </select>
+          </FormField>
+        )}
 
         <FormField label="Environment" htmlFor="env" error={e.env?.message} hint="Sandbox is for testing with Safaricom’s fake money. Production is live.">
           <select id="env" className={selectClass} aria-invalid={!!e.env} {...form.register("env")}>

@@ -13,7 +13,6 @@ import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { FormField } from "@/components/ui/form-field";
 import { PrimaryLink } from "@/components/layout/primary-link";
-import { suggestAccountRef } from "@/lib/format";
 import { tenantSchema, type TenantInput, type TenantValues } from "@/lib/validators/tenants";
 import { createTenant, updateTenant } from "@/lib/tenants/actions";
 
@@ -23,7 +22,7 @@ export type BuildingOption = {
 };
 export type TenantFormData = {
   id: string; name: string; nationalId: string; phone: string; buildingId: string; houseNo: string | null;
-  rentAmount: number; accountRef: string | null; moveInDate: string; active: boolean;
+  rentAmount: number; accountRef: string | null; alsoPaysFrom: string | null; moveInDate: string; active: boolean;
 };
 
 const selectClass = "h-9 w-full rounded-lg border border-input bg-card px-3 text-sm outline-none transition-colors focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/30 aria-invalid:border-destructive disabled:opacity-50";
@@ -37,7 +36,7 @@ export function TenantForm({ buildings, tenant }: { buildings: BuildingOption[];
     defaultValues: {
       name: tenant?.name ?? "", nationalId: tenant?.nationalId ?? "", phone: tenant?.phone ?? "",
       buildingId: tenant?.buildingId ?? "", houseNo: tenant?.houseNo ?? "", rentAmount: tenant?.rentAmount ?? "",
-      accountRef: tenant?.accountRef ?? "", moveInDate: tenant?.moveInDate ?? "",
+      accountRef: tenant?.accountRef ?? "", alsoPaysFrom: tenant?.alsoPaysFrom ?? "", moveInDate: tenant?.moveInDate ?? "",
     },
   });
   const e = form.formState.errors;
@@ -63,7 +62,7 @@ export function TenantForm({ buildings, tenant }: { buildings: BuildingOption[];
     }
     start(async () => {
       try {
-        const payload = chosen?.shortcodeType === "till" ? { ...values, accountRef: undefined } : values;
+        const payload = chosen?.shortcodeType === "till" ? { ...values, accountRef: undefined } : { ...values, alsoPaysFrom: undefined };
         const r = tenant ? await updateTenant(tenant.id, payload) : await createTenant(payload);
         if (!r.ok) {
           Object.entries(r.fieldErrors ?? {}).forEach(([k, message]) => form.setError(k as "name", { message }));
@@ -128,23 +127,22 @@ export function TenantForm({ buildings, tenant }: { buildings: BuildingOption[];
 
           {/* The payment field depends on the building's paybill or till. */}
           {chosen?.shortcodeType === "paybill" && (
-            <FormField label="Paybill account number" htmlFor="accountRef" error={e.accountRef?.message}
-              hint={`What this tenant types as the account number when paying to Paybill ${chosen.shortcodeNumber}.`}>
-              <div className="flex gap-2">
-                <Input id="accountRef" placeholder="e.g. KC-B-204" autoComplete="off" className="font-mono uppercase" {...form.register("accountRef")} aria-invalid={!!e.accountRef} />
-                <Button type="button" variant="outline" className="shrink-0" onClick={() => {
-                  const s = suggestAccountRef(chosen.name, form.getValues("houseNo") ?? "");
-                  if (!s) toast.info("Enter the house number first, then I can suggest one.");
-                  else form.setValue("accountRef", s, { shouldDirty: true, shouldValidate: true });
-                }}>Suggest</Button>
-              </div>
+            <FormField label="Account number" htmlFor="accountRef" error={e.accountRef?.message}
+              hint={`The number or name this tenant types as the “account” when paying to Paybill ${chosen.shortcodeNumber}. Payments are matched to them by it.`}>
+              <Input id="accountRef" placeholder="e.g. KC-B-204" autoComplete="off" className="font-mono uppercase" {...form.register("accountRef")} aria-invalid={!!e.accountRef} />
             </FormField>
           )}
           {chosen?.shortcodeType === "till" && (
             <div className="flex items-start gap-2 rounded-lg bg-muted px-3 py-2.5 text-xs text-muted-foreground sm:self-end">
               <Info className="mt-0.5 size-3.5 shrink-0" />
-              <span>{chosen.name} collects on Till {chosen.shortcodeNumber}. Tills have no account number, so you’ll mark this tenant’s rent as paid yourself.</span>
+              <span>Tenants here pay to Till {chosen.shortcodeNumber}, which has no account number. The app will suggest which payments belong to this tenant, and you check them under Payments.</span>
             </div>
+          )}
+          {chosen?.shortcodeType === "till" && (
+            <FormField label="Also pays from (optional)" htmlFor="alsoPaysFrom" error={e.alsoPaysFrom?.message}
+              hint="Someone else who pays this tenant’s rent, such as a spouse or relative. Add their name or phone number so their payments are recognised.">
+              <Input id="alsoPaysFrom" placeholder="e.g. Peter Kamau, 0722 111 126" autoComplete="off" {...form.register("alsoPaysFrom")} aria-invalid={!!e.alsoPaysFrom} />
+            </FormField>
           )}
           {chosen && !chosen.shortcodeType && tenant && (
             <FormField label="Account number (optional)" htmlFor="accountRef" error={e.accountRef?.message} hint="This building has no paybill or till attached yet.">

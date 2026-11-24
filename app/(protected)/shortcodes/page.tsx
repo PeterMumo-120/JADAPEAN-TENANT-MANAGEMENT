@@ -22,7 +22,7 @@ export default async function ShortcodesPage() {
 
   const items: ShortcodeCardData[] = list.map((s) => ({
     id: s.id, label: s.label, type: s.type, number: s.number, env: s.env, active: s.active,
-    hasKeys: hasKeys(s), keyPreview: s.consumerKey ? `${s.consumerKey.slice(0, 4)}…${s.consumerKey.slice(-3)}` : null, nominatedNumber: s.nominatedNumber,
+    hasKeys: hasKeys(s), keyPreview: s.consumerKey ? `${s.consumerKey.slice(0, 4)}…${s.consumerKey.slice(-3)}` : null, nominatedNumber: s.nominatedNumber, matchMode: s.matchMode,
     urlsRegistered: s.urlsRegisteredAt ? formatWhen(s.urlsRegisteredAt) : null,
     pullRegistered: s.pullRegisteredAt ? formatWhen(s.pullRegisteredAt) : null,
     lastSync: s.lastSyncAt ? formatWhen(s.lastSyncAt) : null, lastSyncError: s.lastSyncError,
@@ -31,13 +31,13 @@ export default async function ShortcodesPage() {
 
   return (
     <>
-      <PageHeader title="Paybills & Tills" description="Every M-Pesa number you collect rent on, each with its own Daraja app."
-        actions={items.length ? <PrimaryLink href="/shortcodes/new">Add paybill or till</PrimaryLink> : undefined} />
+      <PageHeader title="Payment numbers" description="Advanced set-up: the M-Pesa numbers tenants pay rent to, and how each one connects to M-Pesa. You only need this when adding a new number."
+        actions={items.length ? <PrimaryLink href="/shortcodes/new">Add payment number</PrimaryLink> : undefined} />
       <div className="mt-6">
         {items.length === 0 ? (
           <Card className="panel-card">
-            <EmptyState icon={Landmark} title="No paybills or tills yet" description="Add the paybill or till you collect rent on. Buildings are attached to one when you create them."
-              action={<PrimaryLink href="/shortcodes/new">Add paybill or till</PrimaryLink>} />
+            <EmptyState icon={Landmark} title="No payment numbers yet" description="Add the paybill or till tenants pay rent to. Each building is linked to one when you create it."
+              action={<PrimaryLink href="/shortcodes/new">Add payment number</PrimaryLink>} />
           </Card>
         ) : <ShortcodeList items={items} />}
       </div>

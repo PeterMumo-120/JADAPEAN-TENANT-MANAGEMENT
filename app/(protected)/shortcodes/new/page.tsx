@@ -6,7 +6,7 @@ export default async function NewShortcodePage() {
   await requireAdmin();
   return (
     <>
-      <PageHeader title="Add a paybill or till" description="Add the M-Pesa number you collect rent on. You can attach buildings to it afterwards." />
+      <PageHeader title="Add a payment number" description="Add the M-Pesa number you collect rent on. You can attach buildings to it afterwards." />
       <div className="mt-6 max-w-2xl"><ShortcodeForm /></div>
     </>
   );

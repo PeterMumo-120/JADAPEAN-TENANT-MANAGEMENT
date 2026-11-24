@@ -9,6 +9,7 @@ import { encryptSecret } from "@/lib/mpesa/crypto";
 import { ALREADY_REGISTERED, DarajaError, registerC2B, registerPull, testCredentials } from "@/lib/mpesa/client";
 import { callbackUrls, urlProblem } from "@/lib/mpesa/config";
 import { credsFor, getShortcode } from "@/lib/mpesa/shortcodes";
+import { rematchUnmatched } from "@/lib/payments/allocate";
 import { shortcodeSchema } from "@/lib/validators/shortcodes";
 import { toFieldErrors } from "@/lib/validators/auth";
 import type { ActionResult } from "@/lib/action-result";
@@ -42,6 +43,7 @@ export async function createShortcode(input: unknown): Promise<ActionResult> {
     const [row] = await db.insert(shortcodes).values({
       label: v.label, type: v.type, number: v.number, env: v.env, consumerKey: v.consumerKey ?? null,
       consumerSecretEnc: v.consumerSecret ? await encryptSecret(v.consumerSecret) : null, nominatedNumber: v.nominatedNumber ?? null,
+      matchMode: v.type === "till" ? v.matchMode! : "strict",
     }).returning({ id: shortcodes.id });
     await audit(me.adminId, "shortcode.create", row.id);
     refresh();
@@ -77,10 +79,13 @@ export async function updateShortcode(id: string, input: unknown): Promise<Actio
     await db.update(shortcodes).set({
       label: v.label, type: v.type, number: v.number, env: v.env, consumerKey: key, consumerSecretEnc: secretEnc,
       nominatedNumber: v.nominatedNumber ?? null,
+      matchMode: v.type === "till" ? v.matchMode! : cur.matchMode,
       // A different environment or number means the old registrations no longer apply.
       ...(envChanged ? { urlsRegisteredAt: null, pullRegisteredAt: null, lastSyncError: null } : {}),
     }).where(eq(shortcodes.id, id));
     await audit(me.adminId, "shortcode.update", id);
+    // Changing a till's matching mode (e.g. Off -> Strict) lets waiting payments be looked at under the new rule.
+    if (v.type === "till" && v.matchMode !== cur.matchMode) await rematchUnmatched().catch((e) => console.error("[shortcodes] rematch", e));
     refresh();
     return { ok: true, message: `${v.label} was updated.${envChanged ? " Register its URLs again." : ""}` };
   } catch (e) { return failure(e); }

@@ -22,7 +22,7 @@ export default async function EditTenantPage({ params }: { params: Promise<{ id:
       <div className="mt-6 max-w-2xl">
         <TenantForm buildings={toBuildingOptions(buildings)}
           tenant={{ id: t.id, name: t.name, nationalId: t.nationalId, phone: formatPhone(t.phone), buildingId: t.buildingId, houseNo: t.houseNo,
-            rentAmount: t.rentAmount, accountRef: t.accountRef, moveInDate: t.moveInDate, active: t.status === "active" }} />
+            rentAmount: t.rentAmount, accountRef: t.accountRef, alsoPaysFrom: t.alsoPaysFrom, moveInDate: t.moveInDate, active: t.status === "active" }} />
       </div>
     </>
   );

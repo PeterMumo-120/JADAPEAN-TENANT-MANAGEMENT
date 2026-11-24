@@ -14,7 +14,7 @@ import type { ActionResult } from "@/lib/action-result";
 
 export type ShortcodeCardData = {
   id: string; label: string; type: "paybill" | "till"; number: string; env: "sandbox" | "production"; active: boolean;
-  hasKeys: boolean; keyPreview: string | null; nominatedNumber: string | null;
+  hasKeys: boolean; keyPreview: string | null; nominatedNumber: string | null; matchMode: "off" | "balanced" | "strict";
   urlsRegistered: string | null; pullRegistered: string | null; lastSync: string | null; lastSyncError: string | null;
   buildingCount: number; paymentCount: number;
 };
@@ -85,7 +85,11 @@ export function ShortcodeList({ items }: { items: ShortcodeCardData[] }) {
               {s.lastSyncError && (
                 <p className="flex items-start gap-1.5 rounded-lg bg-destructive/10 px-3 py-2 text-xs text-destructive"><TriangleAlert className="mt-0.5 size-3.5 shrink-0" />{s.lastSyncError}</p>
               )}
-              {s.type === "till" && <p className="rounded-lg bg-muted px-3 py-2 text-xs text-muted-foreground">Till payments have no account number, so they are never matched automatically. Use <strong>Mark as paid</strong> on a tenant, or assign them on the Payments page.</p>}
+              {s.type === "till" && (
+                <p className="rounded-lg bg-muted px-3 py-2 text-xs text-muted-foreground">
+                  Till matching: <strong>{s.matchMode === "strict" ? "Strict" : s.matchMode === "balanced" ? "Balanced" : "Off"}</strong>. Payments are matched from the payer’s name, phone digits and amount, and anything unsure waits in the till inbox on the Payments page.
+                </p>
+              )}
             </div>
 
             <div className="grid grid-cols-2 gap-2 border-t border-border px-4 py-4 sm:grid-cols-3 sm:px-5">

@@ -1,4 +1,4 @@
-import { Building2, Landmark, LayoutDashboard, Settings2, ShieldCheck, Users, Wallet, type LucideIcon } from "lucide-react";
+import { Building2, LayoutDashboard, Settings2, ShieldCheck, Users, Wallet, type LucideIcon } from "lucide-react";
 
 export type NavItem = { label: string; href: string; icon: LucideIcon; badge?: "pendingAdmins" | "unmatchedPayments" };
 
@@ -10,12 +10,14 @@ export const workspaceNav: NavItem[] = [
 ];
 
 export const manageNav: NavItem[] = [
-  { label: "Paybills & Tills", href: "/shortcodes", icon: Landmark },
   { label: "Admins", href: "/admins", icon: ShieldCheck, badge: "pendingAdmins" },
   { label: "Settings", href: "/settings", icon: Settings2 },
 ];
 
+/** Pages that are reachable from Settings but deliberately not in the menu (technical set-up). */
+const hidden = [{ label: "Payment numbers", href: "/shortcodes" }];
+
 export function sectionLabel(pathname: string): string {
-  const all = [...workspaceNav, ...manageNav];
+  const all = [...workspaceNav, ...manageNav, ...hidden];
   return all.find((i) => pathname === i.href || pathname.startsWith(i.href + "/"))?.label ?? "Workspace";
 }

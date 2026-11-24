@@ -16,7 +16,7 @@ export default async function DashboardPage() {
     <>
       <PageHeader
         title={`${greeting()}, ${me.firstName}`}
-        description="Here’s how your buildings are doing this month."
+        description="Here’s what needs your attention today."
         actions={<><RefreshButton /><PrimaryLink href="/tenants/new">Add tenant</PrimaryLink></>}
       />
       <AutoSync />

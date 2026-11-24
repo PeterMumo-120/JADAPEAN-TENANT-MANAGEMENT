@@ -3,7 +3,7 @@ import { buildings, paymentAllocations, payments, shortcodes, tenants } from "@/
 import { getDb } from "@/lib/db";
 import { formatWhen } from "@/lib/format";
 
-export type PaymentItem = { id: string; name: string; unit: string; building: string; receipt: string; amount: number; time: string; matched: boolean; via: string | null };
+export type PaymentItem = { id: string; name: string; unit: string; building: string; receipt: string; amount: number; time: string; matched: boolean; via: string | null; autoMethod: "learned" | "scored" | "phone" | null; autoReason: string | null };
 
 const via = (sc: { label: string; type: "paybill" | "till"; number: string } | null) => (sc ? `${sc.type === "till" ? "Till" : "Paybill"} ${sc.number}` : null);
 
@@ -17,6 +17,8 @@ export async function getRecentPayments(limit: number): Promise<PaymentItem[]> {
     id: p.id, name: tenant ?? p.payerName ?? "Unmatched payment",
     unit: tenant ? house ?? "No house number" : sc?.type === "till" ? "Till payment" : `Account: ${p.billRef ?? "none"}`,
     building: building ?? "Needs assigning", receipt: p.mpesaReceipt, amount: p.amount, time: formatWhen(p.paidAt), matched: !!tenant, via: via(sc),
+    autoMethod: p.status === "matched" && (p.matchMethod === "learned" || p.matchMethod === "scored" || p.matchMethod === "phone") ? p.matchMethod : null,
+    autoReason: p.matchReason,
   }));
 }
 
@@ -51,4 +53,10 @@ export async function countPaymentsSince(date: Date): Promise<number> {
 export async function countUnmatched(): Promise<number> {
   const [r] = await getDb().select({ n: count() }).from(payments).where(eq(payments.status, "unmatched"));
   return r?.n ?? 0;
+}
+
+/** Everything that has arrived but isn't linked to a tenant yet (paybill and till). */
+export async function getUnmatchedSummary(): Promise<{ count: number; amount: number }> {
+  const [r] = await getDb().select({ n: count(), total: sum(payments.amount) }).from(payments).where(eq(payments.status, "unmatched"));
+  return { count: r?.n ?? 0, amount: Number(r?.total ?? 0) };
 }
